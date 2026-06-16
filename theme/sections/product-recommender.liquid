@@ -1,0 +1,136 @@
+<section class="recommender">
+  <div class="container">
+
+    <div class="recommender__header">
+      <span class="section-label">Smart Picks</span>
+      <h2 class="recommender__title">Complete Your Setup</h2>
+      <p class="recommender__subtitle">
+        Tell us your typing style and we'll find your perfect match.
+      </p>
+    </div>
+
+    <!-- Quiz Steps -->
+    <div class="recommender__quiz" id="recommender-quiz">
+
+      <!-- Step 1: Use Case -->
+      <div class="quiz-step is-active" data-step="1">
+        <h3 class="quiz-step__question">What do you primarily use your keyboard for?</h3>
+        <div class="quiz-step__options">
+          <button class="quiz-option" data-value="gaming">
+            <span class="quiz-option__icon">🎮</span>
+            <span class="quiz-option__label">Gaming</span>
+            <span class="quiz-option__desc">Fast actuation, low latency</span>
+          </button>
+          <button class="quiz-option" data-value="typing">
+            <span class="quiz-option__icon">⌨️</span>
+            <span class="quiz-option__label">Typing / Coding</span>
+            <span class="quiz-option__desc">Comfort for long sessions</span>
+          </button>
+          <button class="quiz-option" data-value="office">
+            <span class="quiz-option__icon">💼</span>
+            <span class="quiz-option__label">Office / Work</span>
+            <span class="quiz-option__desc">Quiet and professional</span>
+          </button>
+          <button class="quiz-option" data-value="enthusiast">
+            <span class="quiz-option__icon">🔬</span>
+            <span class="quiz-option__label">Enthusiast</span>
+            <span class="quiz-option__desc">Premium feel and sound</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Sound Preference -->
+      <div class="quiz-step" data-step="2">
+        <h3 class="quiz-step__question">What sound profile do you prefer?</h3>
+        <div class="quiz-step__options">
+          <button class="quiz-option" data-value="silent">
+            <span class="quiz-option__icon">🤫</span>
+            <span class="quiz-option__label">Silent</span>
+            <span class="quiz-option__desc">Barely audible</span>
+          </button>
+          <button class="quiz-option" data-value="thock">
+            <span class="quiz-option__icon">🎵</span>
+            <span class="quiz-option__label">Thocky</span>
+            <span class="quiz-option__desc">Deep satisfying sound</span>
+          </button>
+          <button class="quiz-option" data-value="clicky">
+            <span class="quiz-option__icon">🔊</span>
+            <span class="quiz-option__label">Clicky</span>
+            <span class="quiz-option__desc">Tactile feedback + click</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Budget -->
+      <div class="quiz-step" data-step="3">
+        <h3 class="quiz-step__question">What's your budget range?</h3>
+        <div class="quiz-step__options">
+          <button class="quiz-option" data-value="budget">
+            <span class="quiz-option__icon">💚</span>
+            <span class="quiz-option__label">Entry Level</span>
+            <span class="quiz-option__desc">Under $100</span>
+          </button>
+          <button class="quiz-option" data-value="mid">
+            <span class="quiz-option__icon">💛</span>
+            <span class="quiz-option__label">Mid Range</span>
+            <span class="quiz-option__desc">$100 – $250</span>
+          </button>
+          <button class="quiz-option" data-value="premium">
+            <span class="quiz-option__icon">🔶</span>
+            <span class="quiz-option__label">Premium</span>
+            <span class="quiz-option__desc">$250 – $500</span>
+          </button>
+          <button class="quiz-option" data-value="endgame">
+            <span class="quiz-option__icon">💎</span>
+            <span class="quiz-option__label">Endgame</span>
+            <span class="quiz-option__desc">$500+</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="quiz-progress">
+        <div class="quiz-progress__bar">
+          <div class="quiz-progress__fill" id="quiz-progress-fill"></div>
+        </div>
+        <span class="quiz-progress__text" id="quiz-progress-text">Step 1 of 3</span>
+      </div>
+
+    </div>
+
+    <!-- Results -->
+    <div class="recommender__results" id="recommender-results" style="display:none">
+      <div class="recommender__results-header">
+        <h3>Your Perfect Match</h3>
+        <button class="btn btn--outline btn--sm" id="quiz-restart">
+          Retake Quiz
+        </button>
+      </div>
+      <div class="recommender__results-grid" id="results-grid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script src="{{ 'product-recommender.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Product Recommender",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Complete Your Setup"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Recommender"
+    }
+  ]
+}
+{% endschema %}

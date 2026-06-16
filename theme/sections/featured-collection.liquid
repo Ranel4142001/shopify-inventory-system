@@ -1,0 +1,127 @@
+<section class="featured-collection">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="featured-collection__header">
+      <div class="featured-collection__header-left">
+        {% if section.settings.label != blank %}
+          <span class="section-label">{{ section.settings.label }}</span>
+        {% endif %}
+        <h2 class="featured-collection__title">
+          {{ section.settings.title | default: 'Featured Builds' }}
+        </h2>
+      </div>
+      {% if section.settings.collection != blank %}
+        
+          href="{{ section.settings.collection.url }}"
+          class="featured-collection__view-all btn btn--outline"
+        >
+          View All
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="featured-collection__tabs">
+      <button class="tab-btn is-active" data-filter="all">All</button>
+      <button class="tab-btn" data-filter="group-buy">Group Buys</button>
+      <button class="tab-btn" data-filter="in-stock">In Stock</button>
+      <button class="tab-btn" data-filter="new">New Arrivals</button>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="featured-collection__grid" id="featured-grid">
+      {% assign collection = section.settings.collection %}
+      {% if collection != blank %}
+        {% for product in collection.products limit: section.settings.product_limit %}
+          <div
+            class="featured-collection__item"
+            data-tags="{{ product.tags | join: ',' | downcase }}"
+          >
+            {% render 'product-card', product: product %}
+          </div>
+        {% endfor %}
+      {% else %}
+        {% for i in (1..4) %}
+          <div class="featured-collection__item">
+            <div class="product-card product-card--placeholder">
+              <div class="product-card__image-wrapper">
+                {{ 'product-' | append: i | placeholder_svg_tag: 'product-card__image' }}
+              </div>
+              <div class="product-card__info">
+                <p class="product-card__vendor">Tactile Lab</p>
+                <h3 class="product-card__title">Sample Keyboard {{ i }}</h3>
+                <div class="price-wrapper">
+                  <span class="price">$149.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // Tab filtering
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      const filter = btn.dataset.filter;
+      document.querySelectorAll('.featured-collection__item').forEach(item => {
+        if (filter === 'all') {
+          item.style.display = 'block';
+        } else {
+          const tags = item.dataset.tags || '';
+          item.style.display = tags.includes(filter) ? 'block' : 'none';
+        }
+      });
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Featured Collection",
+  "settings": [
+    {
+      "type": "text",
+      "id": "label",
+      "label": "Section Label",
+      "default": "Handpicked for You"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Featured Builds"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "range",
+      "id": "product_limit",
+      "label": "Number of Products",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 4
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured Collection"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ page_description | escape }}">
+
+  <title>
+    {{ page_title }}
+    {%- if current_tags %} &ndash; tagged "{{ current_tags | join: ', ' }}"{% endif %}
+    {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif %}
+    {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless %}
+  </title>
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ canonical_url }}">
+
+  <!-- Favicon -->
+  {% if settings.favicon %}
+    <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32 }}">
+  {% endif %}
+
+  <!-- Fonts -->
+  {{ settings.font_heading | font_face: font_display: 'swap' }}
+  {{ settings.font_body | font_face: font_display: 'swap' }}
+
+  <!-- CSS Variables -->
+  <style>
+    :root {
+      --color-primary: {{ settings.color_primary }};
+      --color-background: {{ settings.color_background }};
+      --color-surface: {{ settings.color_surface }};
+      --color-text: {{ settings.color_text }};
+      --color-text-muted: {{ settings.color_text_muted }};
+      --color-border: {{ settings.color_border }};
+      --font-heading: {{ settings.font_heading.family }}, {{ settings.font_heading.fallback_families }};
+      --font-body: {{ settings.font_body.family }}, {{ settings.font_body.fallback_families }};
+      --page-width: {{ settings.page_width }}px;
+      --font-heading-weight: {{ settings.font_heading.weight }};
+      --font-body-weight: {{ settings.font_body.weight }};
+    }
+  </style>
+
+  <!-- Theme CSS -->
+  {{ 'theme.css' | asset_url | stylesheet_tag }}
+
+  {{ content_for_header }}
+</head>
+
+<body class="template-{{ template.name }}">
+
+  <!-- Skip to content -->
+  <a class="skip-to-content" href="#main-content">
+    Skip to content
+  </a>
+
+  <!-- Header -->
+  {% section 'header' %}
+
+  <!-- Cart Drawer -->
+  {% render 'cart-drawer' %}
+
+  <!-- Main Content -->
+  <main id="main-content" role="main" tabindex="-1">
+    {{ content_for_layout }}
+  </main>
+
+  <!-- Footer -->
+  {% section 'footer' %}
+
+  <!-- Core JS -->
+  <script src="{{ 'theme.js' | asset_url }}" defer></script>
+  <script src="{{ 'cart.js' | asset_url }}" defer></script>
+
+</body>
+</html>

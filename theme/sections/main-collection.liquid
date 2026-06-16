@@ -1,0 +1,136 @@
+<div class="collection-page">
+  <div class="container">
+
+    <!-- Collection Header -->
+    <div class="collection-page__header">
+      <h1 class="collection-page__title">{{ collection.title }}</h1>
+      {% if collection.description != blank %}
+        <div class="collection-page__description">
+          {{ collection.description }}
+        </div>
+      {% endif %}
+      <p class="collection-page__count">
+        {{ collection.products_count }}
+        {{ 'collection.products_count' | t }}
+      </p>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="collection-page__toolbar">
+
+      <!-- Filter Tags -->
+      <div class="collection-page__filters">
+        
+          href="{{ collection.url }}"
+          class="filter-tag {% unless current_tags %}is-active{% endunless %}"
+        >
+          All
+        </a>
+        {% for tag in collection.all_tags %}
+          {% if collection.tags contains tag %}
+            
+              href="{{ collection.url }}/{{ tag | handle }}"
+              class="filter-tag {% if current_tags contains tag %}is-active{% endif %}"
+            >
+              {{ tag }}
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Sort -->
+      <div class="collection-page__sort">
+        <label for="sort-select" class="sr-only">Sort by</label>
+        <select
+          id="sort-select"
+          class="sort-select"
+          onchange="window.location.href = this.value"
+        >
+          <option
+            value="{{ collection.url }}?sort_by=manual"
+            {% if collection.sort_by == 'manual' %}selected{% endif %}
+          >
+            Featured
+          </option>
+          <option
+            value="{{ collection.url }}?sort_by=price-ascending"
+            {% if collection.sort_by == 'price-ascending' %}selected{% endif %}
+          >
+            Price: Low to High
+          </option>
+          <option
+            value="{{ collection.url }}?sort_by=price-descending"
+            {% if collection.sort_by == 'price-descending' %}selected{% endif %}
+          >
+            Price: High to Low
+          </option>
+          <option
+            value="{{ collection.url }}?sort_by=created-descending"
+            {% if collection.sort_by == 'created-descending' %}selected{% endif %}
+          >
+            Newest
+          </option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Products Grid -->
+    {% paginate collection.products by 12 %}
+      {% if collection.products.size > 0 %}
+        <div class="collection-page__grid">
+          {% for product in collection.products %}
+            {% render 'product-card', product: product %}
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if paginate.pages > 1 %}
+          <div class="pagination">
+            {% if paginate.previous %}
+              <a href="{{ paginate.previous.url }}" class="pagination__btn">
+                &larr; Previous
+              </a>
+            {% endif %}
+
+            {% for part in paginate.parts %}
+              {% if part.is_link %}
+                <a href="{{ part.url }}" class="pagination__page">
+                  {{ part.title }}
+                </a>
+              {% elsif part.title == paginate.current_page %}
+                <span class="pagination__page is-active">
+                  {{ part.title }}
+                </span>
+              {% else %}
+                <span class="pagination__ellipsis">{{ part.title }}</span>
+              {% endif %}
+            {% endfor %}
+
+            {% if paginate.next %}
+              <a href="{{ paginate.next.url }}" class="pagination__btn">
+                Next &rarr;
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      {% else %}
+        <div class="collection-page__empty">
+          <p>{{ 'collection.no_products' | t }}</p>
+          <a href="/collections/all" class="btn btn--primary">
+            Browse All Products
+          </a>
+        </div>
+      {% endif %}
+    {% endpaginate %}
+
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Collection Page",
+  "settings": []
+}
+{% endschema %}

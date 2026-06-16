@@ -1,0 +1,201 @@
+<div class="cart-page">
+  <div class="container">
+
+    <h1 class="cart-page__title">{{ 'cart.title' | t }}</h1>
+
+    {% if cart.item_count > 0 %}
+      <div class="cart-page__inner">
+
+        <!-- Cart Items -->
+        <div class="cart-page__items">
+          <form action="/cart" method="post" id="cart-form">
+
+            <!-- Table Header -->
+            <div class="cart-table__header">
+              <span>Product</span>
+              <span>Price</span>
+              <span>Quantity</span>
+              <span>Total</span>
+            </div>
+
+            <!-- Items -->
+            {% for item in cart.items %}
+              <div class="cart-table__row" data-key="{{ item.key }}">
+
+                <!-- Product -->
+                <div class="cart-table__product">
+                  <a href="{{ item.url }}" class="cart-table__image-link">
+                    {% if item.image %}
+                      <img
+                        src="{{ item.image | image_url: width: 120 }}"
+                        alt="{{ item.image.alt | escape }}"
+                        class="cart-table__image"
+                        width="120"
+                        height="120"
+                      >
+                    {% endif %}
+                  </a>
+                  <div class="cart-table__product-info">
+                    <p class="cart-table__vendor">{{ item.vendor }}</p>
+                    <a href="{{ item.url }}" class="cart-table__product-title">
+                      {{ item.product.title }}
+                    </a>
+                    {% unless item.variant.title == 'Default Title' %}
+                      <p class="cart-table__variant">{{ item.variant.title }}</p>
+                    {% endunless %}
+
+                    <!-- Line item properties -->
+                    {% for property in item.properties %}
+                      {% unless property.last == blank %}
+                        <p class="cart-table__property">
+                          {{ property.first }}: {{ property.last }}
+                        </p>
+                      {% endunless %}
+                    {% endfor %}
+
+                    <button
+                      type="button"
+                      class="cart-table__remove"
+                      data-key="{{ item.key }}"
+                    >
+                      {{ 'cart.remove' | t }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Price -->
+                <div class="cart-table__price">
+                  {{ item.price | money }}
+                </div>
+
+                <!-- Quantity -->
+                <div class="cart-table__quantity">
+                  <div class="quantity-selector">
+                    <button
+                      type="button"
+                      class="quantity-selector__btn"
+                      data-action="decrease"
+                      data-key="{{ item.key }}"
+                    >−</button>
+                    <input
+                      type="number"
+                      name="updates[]"
+                      value="{{ item.quantity }}"
+                      min="0"
+                      class="quantity-selector__input"
+                      data-key="{{ item.key }}"
+                    >
+                    <button
+                      type="button"
+                      class="quantity-selector__btn"
+                      data-action="increase"
+                      data-key="{{ item.key }}"
+                    >+</button>
+                  </div>
+                </div>
+
+                <!-- Line Total -->
+                <div class="cart-table__total">
+                  {{ item.final_line_price | money }}
+                </div>
+
+              </div>
+            {% endfor %}
+
+          </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="cart-page__summary">
+          <div class="cart-summary">
+            <h2 class="cart-summary__title">Order Summary</h2>
+
+            <div class="cart-summary__lines">
+              <div class="cart-summary__line">
+                <span>Subtotal</span>
+                <span id="cart-page-subtotal">
+                  {{ cart.total_price | money }}
+                </span>
+              </div>
+              <div class="cart-summary__line cart-summary__line--muted">
+                <span>Shipping</span>
+                <span>Calculated at checkout</span>
+              </div>
+              {% if cart.total_discount > 0 %}
+                <div class="cart-summary__line cart-summary__line--discount">
+                  <span>Discount</span>
+                  <span>−{{ cart.total_discount | money }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="cart-summary__total">
+              <span>Total</span>
+              <span>{{ cart.total_price | money }}</span>
+            </div>
+
+            <!-- Checkout -->
+            <a href="/checkout" class="btn btn--primary btn--full btn--lg">
+              {{ 'cart.checkout' | t }}
+            </a>
+
+            <a href="/collections/all" class="cart-summary__continue">
+              {{ 'cart.continue_shopping' | t }}
+            </a>
+
+            <!-- Trust Badges -->
+            <div class="cart-summary__trust">
+              <div class="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>Secure Checkout</span>
+              </div>
+              <div class="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>Worldwide Shipping</span>
+              </div>
+              <div class="trust-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                  <circle cx="16" cy="13" r="1"/>
+                </svg>
+                <span>Secure Payment</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    {% else %}
+      <!-- Empty Cart -->
+      <div class="cart-page__empty">
+        <div class="cart-empty">
+          <svg class="cart-empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          <h2 class="cart-empty__title">{{ 'cart.empty' | t }}</h2>
+          <p class="cart-empty__message">{{ 'cart.empty_message' | t }}</p>
+          <a href="/collections/all" class="btn btn--primary btn--lg">
+            {{ 'cart.continue_shopping' | t }}
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Cart Page",
+  "settings": []
+}
+{% endschema %}

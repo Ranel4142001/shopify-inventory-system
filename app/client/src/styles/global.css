@@ -1,0 +1,120 @@
+/* ── Reset ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Polaris overrides for dark theme ───────────────────────── */
+:root {
+  --tl-primary: #00FF94;
+  --tl-bg: #0A0A0A;
+  --tl-surface: #141414;
+  --tl-border: #2A2A2A;
+  --tl-text: #FFFFFF;
+  --tl-text-muted: #888888;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #F6F6F7;
+  color: #1A1A1A;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Score badges ────────────────────────────────────────────── */
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.score-badge--critical {
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+.score-badge--high {
+  background: #FEF3C7;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+}
+.score-badge--medium {
+  background: #DBEAFE;
+  color: #2563EB;
+  border: 1px solid #BFDBFE;
+}
+.score-badge--low {
+  background: #DCFCE7;
+  color: #16A34A;
+  border: 1px solid #BBF7D0;
+}
+
+/* ── Alert banner ────────────────────────────────────────────── */
+.alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.alert-banner--critical {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+}
+.alert-banner--high {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+}
+.alert-banner--info {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1E40AF;
+}
+.alert-banner__icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert-banner__content { flex: 1; }
+.alert-banner__title { font-weight: 600; margin-bottom: 2px; }
+
+/* ── Data table extras ───────────────────────────────────────── */
+.tl-table { width: 100%; border-collapse: collapse; }
+.tl-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6B7280;
+  border-bottom: 1px solid #E5E7EB;
+  white-space: nowrap;
+}
+.tl-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #F3F4F6;
+  vertical-align: middle;
+}
+.tl-table tr:last-child td { border-bottom: none; }
+.tl-table tr:hover td { background: #F9FAFB; }
+
+/* ── Urgency rank number ─────────────────────────────────────── */
+.rank-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  background: #F3F4F6;
+  color: #374151;
+}
+.rank-number--1 { background: #FEF3C7; color: #92400E; }
+.rank-number--2 { background: #F3F4F6; color: #374151; }
+.rank-number--3 { background: #FEF9EE; color: #78350F; }

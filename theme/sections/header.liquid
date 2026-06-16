@@ -1,0 +1,113 @@
+<header class="header" id="site-header">
+  <div class="header__inner container">
+
+    <!-- Logo -->
+    <a href="/" class="header__logo" aria-label="{{ shop.name }}">
+      {% if section.settings.logo %}
+        <img
+          src="{{ section.settings.logo | image_url: width: 200 }}"
+          alt="{{ shop.name }}"
+          width="160"
+          height="40"
+        >
+      {% else %}
+        <span class="header__logo-text">
+          <span class="header__logo-accent">Tactile</span> Lab
+        </span>
+      {% endif %}
+    </a>
+
+    <!-- Nav -->
+    <nav class="header__nav" aria-label="Main navigation">
+      <ul class="header__nav-list">
+        {% for link in section.settings.menu.links %}
+          <li class="header__nav-item">
+            
+              href="{{ link.url }}"
+              class="header__nav-link {% if link.active %}is-active{% endif %}"
+            >
+              {{ link.title }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <!-- Actions -->
+    <div class="header__actions">
+
+      <!-- Search -->
+      <button class="header__action-btn" aria-label="Search" id="search-toggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+      </button>
+
+      <!-- Cart -->
+      <button
+        class="header__action-btn header__cart-btn"
+        aria-label="{{ 'navigation.cart' | t }}"
+        id="cart-drawer-trigger"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <span class="header__cart-count" id="header-cart-count">
+          {{ cart.item_count }}
+        </span>
+      </button>
+
+      <!-- Mobile Menu Toggle -->
+      <button
+        class="header__action-btn header__mobile-toggle"
+        aria-label="{{ 'navigation.menu' | t }}"
+        id="mobile-menu-toggle"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Mobile Nav -->
+  <nav class="header__mobile-nav" id="mobile-nav" aria-hidden="true">
+    <ul class="header__mobile-nav-list">
+      {% for link in section.settings.menu.links %}
+        <li>
+          
+            href="{{ link.url }}"
+            class="header__mobile-nav-link {% if link.active %}is-active{% endif %}"
+          >
+            {{ link.title }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Navigation Menu",
+      "default": "main-menu"
+    }
+  ]
+}
+{% endschema %}

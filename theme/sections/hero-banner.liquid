@@ -1,0 +1,188 @@
+<section class="hero" style="background-image: url('{{ section.settings.background_image | image_url: width: 1920 }}')">
+  <div class="hero__overlay"></div>
+  <div class="hero__inner container">
+
+    <!-- Label -->
+    {% if section.settings.label != blank %}
+      <span class="hero__label">
+        <span class="hero__label-dot"></span>
+        {{ section.settings.label }}
+      </span>
+    {% endif %}
+
+    <!-- Heading -->
+    <h1 class="hero__heading">
+      {{ section.settings.heading | default: 'Engineer Your<br>Perfect Board' }}
+    </h1>
+
+    <!-- Subheading -->
+    {% if section.settings.subheading != blank %}
+      <p class="hero__subheading">{{ section.settings.subheading }}</p>
+    {% endif %}
+
+    <!-- Stats Bar -->
+    <div class="hero__stats">
+      {% for block in section.blocks %}
+        {% if block.type == 'stat' %}
+          <div class="hero__stat" {{ block.shopify_attributes }}>
+            <span class="hero__stat-value">{{ block.settings.value }}</span>
+            <span class="hero__stat-label">{{ block.settings.label }}</span>
+          </div>
+          {% unless forloop.last %}
+            <div class="hero__stat-divider"></div>
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- CTAs -->
+    <div class="hero__ctas">
+      {% if section.settings.cta_primary_label != blank %}
+        
+          href="{{ section.settings.cta_primary_url }}"
+          class="btn btn--primary btn--lg"
+        >
+          {{ section.settings.cta_primary_label }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      {% endif %}
+      {% if section.settings.cta_secondary_label != blank %}
+        
+          href="{{ section.settings.cta_secondary_url }}"
+          class="btn btn--outline btn--lg"
+        >
+          {{ section.settings.cta_secondary_label }}
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="hero__scroll">
+      <span>Scroll to explore</span>
+      <div class="hero__scroll-line"></div>
+    </div>
+
+  </div>
+
+  <!-- Floating keyboard graphic -->
+  <div class="hero__graphic" aria-hidden="true">
+    <div class="hero__keyboard">
+      {% assign key_rows = "ESC,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12|`,1,2,3,4,5,6,7,8,9,0,-,=|TAB,Q,W,E,R,T,Y,U,I,O,P,[,]|CAPS,A,S,D,F,G,H,J,K,L,;,'" | split: "|" %}
+      {% for row in key_rows %}
+        <div class="hero__key-row">
+          {% assign keys = row | split: "," %}
+          {% for key in keys %}
+            <div class="hero__key" style="animation-delay: {{ forloop.index | times: 0.05 }}s">
+              <span>{{ key }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</section>
+
+{% schema %}
+{
+  "name": "Hero Banner",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "Background Image"
+    },
+    {
+      "type": "text",
+      "id": "label",
+      "label": "Label",
+      "default": "Now Available — Limited Drop"
+    },
+    {
+      "type": "richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "<p>Engineer Your Perfect Board</p>"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "High-end mechanical keyboards and desk accessories, built for those who demand precision."
+    },
+    {
+      "type": "text",
+      "id": "cta_primary_label",
+      "label": "Primary Button Label",
+      "default": "Build Your Board"
+    },
+    {
+      "type": "url",
+      "id": "cta_primary_url",
+      "label": "Primary Button URL"
+    },
+    {
+      "type": "text",
+      "id": "cta_secondary_label",
+      "label": "Secondary Button Label",
+      "default": "View Group Buys"
+    },
+    {
+      "type": "url",
+      "id": "cta_secondary_url",
+      "label": "Secondary Button URL"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "stat",
+      "name": "Stat",
+      "settings": [
+        {
+          "type": "text",
+          "id": "value",
+          "label": "Value",
+          "default": "10K+"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Community Members"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero Banner",
+      "blocks": [
+        {
+          "type": "stat",
+          "settings": {
+            "value": "10K+",
+            "label": "Community Members"
+          }
+        },
+        {
+          "type": "stat",
+          "settings": {
+            "value": "50+",
+            "label": "Group Buys Shipped"
+          }
+        },
+        {
+          "type": "stat",
+          "settings": {
+            "value": "99%",
+            "label": "Satisfaction Rate"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

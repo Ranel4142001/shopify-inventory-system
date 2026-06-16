@@ -1,0 +1,55 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-banner",
+      "settings": {
+        "label": "Now Available — Limited Drop",
+        "heading": "<p>Engineer Your Perfect Board</p>",
+        "subheading": "High-end mechanical keyboards and desk accessories, built for those who demand precision.",
+        "cta_primary_label": "Build Your Board",
+        "cta_primary_url": "/products/tactile-lab-custom-board",
+        "cta_secondary_label": "View Group Buys",
+        "cta_secondary_url": "/collections/group-buys"
+      },
+      "blocks": {
+        "stat1": {
+          "type": "stat",
+          "settings": {
+            "value": "10K+",
+            "label": "Community Members"
+          }
+        },
+        "stat2": {
+          "type": "stat",
+          "settings": {
+            "value": "50+",
+            "label": "Group Buys Shipped"
+          }
+        },
+        "stat3": {
+          "type": "stat",
+          "settings": {
+            "value": "99%",
+            "label": "Satisfaction Rate"
+          }
+        }
+      },
+      "block_order": ["stat1", "stat2", "stat3"]
+    },
+    "featured": {
+      "type": "featured-collection",
+      "settings": {
+        "label": "Handpicked for You",
+        "title": "Featured Builds",
+        "product_limit": 4
+      }
+    },
+    "recommender": {
+      "type": "product-recommender",
+      "settings": {
+        "title": "Complete Your Setup"
+      }
+    }
+  },
+  "order": ["hero", "featured", "recommender"]
+}

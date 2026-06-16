@@ -1,0 +1,282 @@
+<div class="product-page" data-product-id="{{ product.id }}">
+  <div class="container">
+    <div class="product-page__inner">
+
+      <!-- Gallery -->
+      <div class="product-page__gallery">
+        <div class="product-gallery">
+
+          <!-- Main Image -->
+          <div class="product-gallery__main">
+            <img
+              id="product-main-image"
+              src="{{ product.featured_image | image_url: width: 800 }}"
+              alt="{{ product.featured_image.alt | escape }}"
+              class="product-gallery__main-img"
+              width="800"
+              height="800"
+            >
+            {% if product.compare_at_price > product.price %}
+              <span class="product-gallery__badge badge badge--sale">
+                {{ 'products.sale_badge' | t }}
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Thumbnails -->
+          {% if product.images.size > 1 %}
+            <div class="product-gallery__thumbs">
+              {% for image in product.images %}
+                <button
+                  class="product-gallery__thumb {% if forloop.first %}is-active{% endif %}"
+                  data-image-url="{{ image | image_url: width: 800 }}"
+                  data-image-alt="{{ image.alt | escape }}"
+                >
+                  <img
+                    src="{{ image | image_url: width: 120 }}"
+                    alt="{{ image.alt | escape }}"
+                    width="120"
+                    height="120"
+                    loading="lazy"
+                  >
+                </button>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-page__info">
+
+        <!-- Vendor + Title -->
+        <p class="product-page__vendor">{{ product.vendor }}</p>
+        <h1 class="product-page__title">{{ product.title }}</h1>
+
+        <!-- Price -->
+        <div class="product-page__price">
+          {% render 'price', product: product %}
+        </div>
+
+        <!-- Tags -->
+        {% if product.tags.size > 0 %}
+          <div class="product-page__tags">
+            {% for tag in product.tags %}
+              <span class="product-tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Description -->
+        {% if product.description != blank %}
+          <div class="product-page__description">
+            {{ product.description }}
+          </div>
+        {% endif %}
+
+        <!-- BUILD YOUR BOARD CONFIGURATOR -->
+        {% if product.tags contains 'configurator' %}
+          <div class="configurator" id="board-configurator">
+            <h3 class="configurator__title">
+              {{ 'products.configure_build' | t }}
+            </h3>
+
+            <!-- Step 1: Base -->
+            <div class="configurator__step">
+              <label class="configurator__label">
+                {{ 'products.base_keyboard' | t }}
+              </label>
+              <div class="configurator__options" data-group="base">
+                {% for variant in product.variants %}
+                  {% if variant.option1 %}
+                    <button
+                      class="configurator__option {% if forloop.first %}is-selected{% endif %}"
+                      data-group="base"
+                      data-value="{{ variant.option1 }}"
+                      data-price="{{ variant.price }}"
+                      data-image="{{ variant.featured_image | image_url: width: 800 }}"
+                    >
+                      {{ variant.option1 }}
+                    </button>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Step 2: Switches -->
+            <div class="configurator__step">
+              <label class="configurator__label">
+                {{ 'products.switches' | t }}
+              </label>
+              <div class="configurator__options" data-group="switches">
+                <button class="configurator__option is-selected"
+                  data-group="switches" data-value="Linear" data-price="0">
+                  <span class="configurator__option-dot" style="background:#00FF94"></span>
+                  Linear
+                </button>
+                <button class="configurator__option"
+                  data-group="switches" data-value="Tactile" data-price="1000">
+                  <span class="configurator__option-dot" style="background:#FFB800"></span>
+                  Tactile (+$10)
+                </button>
+                <button class="configurator__option"
+                  data-group="switches" data-value="Clicky" data-price="1500">
+                  <span class="configurator__option-dot" style="background:#FF4444"></span>
+                  Clicky (+$15)
+                </button>
+                <button class="configurator__option"
+                  data-group="switches" data-value="Silent" data-price="2000">
+                  <span class="configurator__option-dot" style="background:#8B5CF6"></span>
+                  Silent (+$20)
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 3: Keycaps -->
+            <div class="configurator__step">
+              <label class="configurator__label">
+                {{ 'products.keycaps' | t }}
+              </label>
+              <div class="configurator__options" data-group="keycaps">
+                <button class="configurator__option is-selected"
+                  data-group="keycaps" data-value="Dark Mode" data-price="0">
+                  <span class="configurator__option-swatch" style="background:#1a1a1a;border:2px solid #00FF94"></span>
+                  Dark Mode
+                </button>
+                <button class="configurator__option"
+                  data-group="keycaps" data-value="Arctic White" data-price="2500">
+                  <span class="configurator__option-swatch" style="background:#f0f0f0"></span>
+                  Arctic White (+$25)
+                </button>
+                <button class="configurator__option"
+                  data-group="keycaps" data-value="Ember" data-price="3000">
+                  <span class="configurator__option-swatch" style="background:linear-gradient(135deg,#FF6B6B,#FFB800)"></span>
+                  Ember (+$30)
+                </button>
+                <button class="configurator__option"
+                  data-group="keycaps" data-value="Ocean" data-price="3500">
+                  <span class="configurator__option-swatch" style="background:linear-gradient(135deg,#0066FF,#00CCFF)"></span>
+                  Ocean (+$35)
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Price Display -->
+            <div class="configurator__price-display">
+              <div class="configurator__price-label">
+                {{ 'products.total_price' | t }}
+              </div>
+              <div class="configurator__price-value" id="configurator-total">
+                {{ product.price | money }}
+              </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="configurator__summary" id="configurator-summary">
+              <div class="configurator__summary-item">
+                <span>Base:</span>
+                <span id="summary-base">—</span>
+              </div>
+              <div class="configurator__summary-item">
+                <span>Switches:</span>
+                <span id="summary-switches">Linear</span>
+              </div>
+              <div class="configurator__summary-item">
+                <span>Keycaps:</span>
+                <span id="summary-keycaps">Dark Mode</span>
+              </div>
+            </div>
+
+          </div>
+        {% endif %}
+
+        <!-- Variants (non-configurator products) -->
+        {% unless product.tags contains 'configurator' %}
+          {% if product.has_only_default_variant == false %}
+            {% for option in product.options_with_values %}
+              <div class="product-page__option">
+                <label class="product-page__option-label">
+                  {{ option.name }}
+                </label>
+                <div class="product-page__option-values">
+                  {% for value in option.values %}
+                    <button
+                      class="variant-btn {% if option.selected_value == value %}is-selected{% endif %}"
+                      data-option-index="{{ forloop.parentloop.index0 }}"
+                      data-value="{{ value }}"
+                    >
+                      {{ value }}
+                    </button>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endunless %}
+
+        <!-- Quantity -->
+        <div class="product-page__quantity">
+          <label class="product-page__option-label">
+            {{ 'products.quantity' | t }}
+          </label>
+          <div class="quantity-selector">
+            <button class="quantity-selector__btn" id="qty-decrease">−</button>
+            <input
+              type="number"
+              id="qty-input"
+              class="quantity-selector__input"
+              value="1"
+              min="1"
+              max="99"
+            >
+            <button class="quantity-selector__btn" id="qty-increase">+</button>
+          </div>
+        </div>
+
+        <!-- Add to Cart -->
+        <div class="product-page__actions">
+          <button
+            id="add-to-cart-btn"
+            class="btn btn--primary btn--lg btn--full"
+            data-product-id="{{ product.id }}"
+            data-variant-id="{{ product.selected_or_first_available_variant.id }}"
+            data-base-price="{{ product.price }}"
+            {% unless product.available %}disabled{% endunless %}
+          >
+            {% if product.available %}
+              {{ 'products.add_to_cart' | t }}
+            {% else %}
+              {{ 'products.sold_out' | t }}
+            {% endif %}
+          </button>
+        </div>
+
+        <!-- Product Meta -->
+        <div class="product-page__meta">
+          {% if product.sku != blank %}
+            <span class="product-meta">SKU: {{ product.selected_or_first_available_variant.sku }}</span>
+          {% endif %}
+          {% if product.type != blank %}
+            <span class="product-meta">Type: {{ product.type }}</span>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Product JSON for JS -->
+<script>
+  window.productData = {{ product | json }};
+  window.selectedVariant = {{ product.selected_or_first_available_variant | json }};
+</script>
+<script src="{{ 'product-recommender.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Product Page",
+  "settings": []
+}
+{% endschema %}

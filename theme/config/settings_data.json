@@ -1,0 +1,16 @@
+{
+  "current": {
+    "color_primary": "#00FF94",
+    "color_background": "#0A0A0A",
+    "color_surface": "#141414",
+    "color_text": "#FFFFFF",
+    "color_text_muted": "#888888",
+    "color_border": "#2A2A2A",
+    "font_heading": "space_grotesk_n7",
+    "font_body": "inter_n4",
+    "page_width": 1280,
+    "social_twitter": "https://twitter.com/tactilelab",
+    "social_instagram": "https://instagram.com/tactilelab",
+    "social_discord": "https://discord.gg/tactilelab"
+  }
+}

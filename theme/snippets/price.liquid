@@ -1,0 +1,28 @@
+{% comment %}
+  Renders product price
+  Usage: {% render 'price', product: product %}
+{% endcomment %}
+
+<div class="price-wrapper">
+  {% if product.compare_at_price > product.price %}
+    <span class="price price--sale">
+      {{ product.price | money }}
+    </span>
+    <span class="price price--compare">
+      {{ product.compare_at_price | money }}
+    </span>
+    <span class="price__badge price__badge--sale">
+      {{ 'products.sale_badge' | t }}
+    </span>
+  {% else %}
+    <span class="price">
+      {{ product.price | money }}
+    </span>
+  {% endif %}
+
+  {% if product.price_varies %}
+    <span class="price__from">
+      {{ 'products.from_price' | t }}
+    </span>
+  {% endif %}
+</div>

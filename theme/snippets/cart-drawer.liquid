@@ -1,0 +1,124 @@
+{% comment %}
+  Cart drawer — slides in from the right
+{% endcomment %}
+
+<div class="cart-drawer" id="cart-drawer" aria-hidden="true">
+  <div class="cart-drawer__overlay" id="cart-drawer-overlay"></div>
+
+  <div class="cart-drawer__panel" role="dialog" aria-label="{{ 'cart.title' | t }}">
+
+    <!-- Header -->
+    <div class="cart-drawer__header">
+      <h2 class="cart-drawer__title">
+        {{ 'cart.title' | t }}
+        <span class="cart-drawer__count" id="cart-count">
+          {{ cart.item_count }}
+        </span>
+      </h2>
+      <button class="cart-drawer__close" id="cart-drawer-close" aria-label="Close cart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Items -->
+    <div class="cart-drawer__items" id="cart-drawer-items">
+      {% if cart.item_count > 0 %}
+        {% for item in cart.items %}
+          <div class="cart-item" data-key="{{ item.key }}">
+
+            <!-- Image -->
+            <div class="cart-item__image-wrapper">
+              {% if item.image %}
+                <img
+                  src="{{ item.image | image_url: width: 120 }}"
+                  alt="{{ item.image.alt | escape }}"
+                  class="cart-item__image"
+                  width="120"
+                  height="120"
+                >
+              {% endif %}
+            </div>
+
+            <!-- Info -->
+            <div class="cart-item__info">
+              <p class="cart-item__vendor">{{ item.vendor }}</p>
+              <h4 class="cart-item__title">{{ item.product.title }}</h4>
+
+              {% unless item.variant.title == 'Default Title' %}
+                <p class="cart-item__variant">{{ item.variant.title }}</p>
+              {% endunless %}
+
+              <!-- Line item properties (from configurator) -->
+              {% for property in item.properties %}
+                {% unless property.last == blank %}
+                  <p class="cart-item__property">
+                    <span>{{ property.first }}:</span>
+                    {{ property.last }}
+                  </p>
+                {% endunless %}
+              {% endfor %}
+
+              <!-- Quantity + Price -->
+              <div class="cart-item__footer">
+                <div class="cart-item__quantity">
+                  <button
+                    class="cart-item__qty-btn"
+                    data-action="decrease"
+                    data-key="{{ item.key }}"
+                  >−</button>
+                  <span class="cart-item__qty-value">{{ item.quantity }}</span>
+                  <button
+                    class="cart-item__qty-btn"
+                    data-action="increase"
+                    data-key="{{ item.key }}"
+                  >+</button>
+                </div>
+                <span class="cart-item__price">
+                  {{ item.final_line_price | money }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Remove -->
+            <button
+              class="cart-item__remove"
+              data-key="{{ item.key }}"
+              aria-label="{{ 'cart.remove' | t }}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="cart-drawer__empty">
+          <p>{{ 'cart.empty' | t }}</p>
+          <a href="/collections/all" class="btn btn--primary">
+            {{ 'cart.continue_shopping' | t }}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    {% if cart.item_count > 0 %}
+      <div class="cart-drawer__footer">
+        <div class="cart-drawer__subtotal">
+          <span>{{ 'cart.subtotal' | t }}</span>
+          <span id="cart-subtotal">{{ cart.total_price | money }}</span>
+        </div>
+        <a href="/checkout" class="btn btn--primary btn--full">
+          {{ 'cart.checkout' | t }}
+        </a>
+        <a href="/collections/all" class="cart-drawer__continue">
+          {{ 'cart.continue_shopping' | t }}
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
