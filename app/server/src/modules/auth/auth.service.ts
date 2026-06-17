@@ -112,7 +112,7 @@ export class AuthService {
           scope,
           email: shopInfo.email,
           shopName: shopInfo.name,
-          isActive: 'true',
+          isActive: true,
           updatedAt: new Date(),
         })
         .where(eq(shops.id, shopId));
@@ -126,7 +126,7 @@ export class AuthService {
         scope,
         email: shopInfo.email,
         shopName: shopInfo.name,
-        isActive: 'true',
+        isActive: true,
         installedAt: new Date(),
         updatedAt: new Date(),
       });

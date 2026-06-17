@@ -17,24 +17,45 @@ interface ApiResponse<T> {
   };
 }
 
+function getShop(): string {
+  // Try URL params first
+  const params = new URLSearchParams(window.location.search);
+  const shopFromUrl = params.get('shop');
+  if (shopFromUrl) return shopFromUrl;
+
+  // Try sessionStorage fallback
+  const shopFromStorage = sessionStorage.getItem('tl_shop');
+  if (shopFromStorage) return shopFromStorage;
+
+  return '';
+}
+
+// Store shop on load
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const shop = params.get('shop');
+  if (shop) sessionStorage.setItem('tl_shop', shop);
+})();
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${BASE_URL}${endpoint}`;
+  const shop = getShop();
+  const separator = endpoint.includes('?') ? '&' : '?';
+  const url = `${BASE_URL}${endpoint}${shop ? `${separator}shop=${shop}` : ''}`;
 
   const res = await fetch(url, {
     ...options,
-    credentials: 'include', // send cookies
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...(shop ? { 'x-shop-domain': shop } : {}),
       ...options.headers,
     },
   });
 
-  // Handle 401 — redirect to auth
   if (res.status === 401) {
-    const shop = new URLSearchParams(window.location.search).get('shop');
     if (shop) {
       window.location.href = `/api/auth/install?shop=${shop}`;
     }
@@ -48,19 +69,16 @@ async function request<T>(
 export const apiClient = {
   get: <T>(endpoint: string) =>
     request<T>(endpoint, { method: 'GET' }),
-
   post: <T>(endpoint: string, body: unknown) =>
     request<T>(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-
   put: <T>(endpoint: string, body: unknown) =>
     request<T>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
-
   delete: <T>(endpoint: string) =>
     request<T>(endpoint, { method: 'DELETE' }),
 };

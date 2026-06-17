@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "bac1b6e0-e89c-435d-843f-f43672df80ab",
+  "id": "060c7b02-ea08-4825-bbfb-540795525286",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "shops": {
@@ -23,7 +23,7 @@
         },
         "access_token": {
           "name": "access_token",
-          "type": "text",
+          "type": "varchar(512)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -51,11 +51,11 @@
         },
         "is_active": {
           "name": "is_active",
-          "type": "varchar(5)",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'true'"
+          "default": true
         },
         "installed_at": {
           "name": "installed_at",
@@ -63,7 +63,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -71,11 +71,25 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_shops_domain": {
+          "name": "idx_shops_domain",
+          "columns": [
+            "domain"
+          ],
+          "isUnique": true
+        },
+        "idx_shops_is_active": {
+          "name": "idx_shops_is_active",
+          "columns": [
+            "is_active"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "shops_id": {
@@ -85,14 +99,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "shops_domain_unique": {
-          "name": "shops_domain_unique",
-          "columns": [
-            "domain"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "sessions": {
@@ -114,14 +121,14 @@
         },
         "access_token": {
           "name": "access_token",
-          "type": "text",
+          "type": "varchar(512)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "refresh_token": {
           "name": "refresh_token",
-          "type": "text",
+          "type": "varchar(512)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -139,7 +146,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -147,11 +154,25 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_sessions_shop_id": {
+          "name": "idx_sessions_shop_id",
+          "columns": [
+            "shop_id"
+          ],
+          "isUnique": true
+        },
+        "idx_sessions_expires_at": {
+          "name": "idx_sessions_expires_at",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "sessions_shop_id_shops_id_fk": {
           "name": "sessions_shop_id_shops_id_fk",
@@ -211,7 +232,7 @@
         },
         "shopify_product_id": {
           "name": "shopify_product_id",
-          "type": "varchar(100)",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -226,7 +247,7 @@
         },
         "target_ship_date": {
           "name": "target_ship_date",
-          "type": "timestamp",
+          "type": "date",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -241,7 +262,7 @@
         },
         "customer_count": {
           "name": "customer_count",
-          "type": "int",
+          "type": "mediumint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -263,6 +284,14 @@
           "autoincrement": false,
           "default": 0
         },
+        "urgency_score": {
+          "name": "urgency_score",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
         "notes": {
           "name": "notes",
           "type": "text",
@@ -276,7 +305,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -284,11 +313,41 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_rules_shop_id": {
+          "name": "idx_rules_shop_id",
+          "columns": [
+            "shop_id"
+          ],
+          "isUnique": false
+        },
+        "idx_rules_shop_product": {
+          "name": "idx_rules_shop_product",
+          "columns": [
+            "shop_id",
+            "shopify_product_id"
+          ],
+          "isUnique": true
+        },
+        "idx_rules_status": {
+          "name": "idx_rules_status",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "idx_rules_shop_urgency": {
+          "name": "idx_rules_shop_urgency",
+          "columns": [
+            "shop_id",
+            "urgency_score"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "rules_shop_id_shops_id_fk": {
           "name": "rules_shop_id_shops_id_fk",
@@ -341,21 +400,21 @@
         },
         "order_index": {
           "name": "order_index",
-          "type": "int",
+          "type": "smallint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "expected_date": {
           "name": "expected_date",
-          "type": "timestamp",
+          "type": "date",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "actual_date": {
           "name": "actual_date",
-          "type": "timestamp",
+          "type": "date",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -374,7 +433,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
@@ -382,11 +441,33 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_products_rule_id": {
+          "name": "idx_products_rule_id",
+          "columns": [
+            "rule_id"
+          ],
+          "isUnique": false
+        },
+        "idx_products_rule_order": {
+          "name": "idx_products_rule_order",
+          "columns": [
+            "rule_id",
+            "order_index"
+          ],
+          "isUnique": true
+        },
+        "idx_products_status": {
+          "name": "idx_products_status",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "products_rule_id_rules_id_fk": {
           "name": "products_rule_id_rules_id_fk",
@@ -432,7 +513,7 @@
         },
         "urgency_score": {
           "name": "urgency_score",
-          "type": "int",
+          "type": "tinyint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -440,7 +521,7 @@
         },
         "days_until_ship": {
           "name": "days_until_ship",
-          "type": "int",
+          "type": "smallint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -448,7 +529,7 @@
         },
         "delay_days": {
           "name": "delay_days",
-          "type": "int",
+          "type": "smallint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -456,7 +537,7 @@
         },
         "customer_count": {
           "name": "customer_count",
-          "type": "int",
+          "type": "mediumint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -475,7 +556,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         },
         "created_at": {
           "name": "created_at",
@@ -483,10 +564,34 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_scores_rule_id": {
+          "name": "idx_scores_rule_id",
+          "columns": [
+            "rule_id"
+          ],
+          "isUnique": false
+        },
+        "idx_scores_rule_reported_at": {
+          "name": "idx_scores_rule_reported_at",
+          "columns": [
+            "rule_id",
+            "reported_at"
+          ],
+          "isUnique": false
+        },
+        "idx_scores_rule_reported_unique": {
+          "name": "idx_scores_rule_reported_unique",
+          "columns": [
+            "rule_id",
+            "reported_at"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "scores_rule_id_rules_id_fk": {
           "name": "scores_rule_id_rules_id_fk",
@@ -553,7 +658,7 @@
         },
         "metadata": {
           "name": "metadata",
-          "type": "text",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -567,7 +672,37 @@
           "default": "(now())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_activity_logs_shop_id": {
+          "name": "idx_activity_logs_shop_id",
+          "columns": [
+            "shop_id"
+          ],
+          "isUnique": false
+        },
+        "idx_activity_logs_group_buy_id": {
+          "name": "idx_activity_logs_group_buy_id",
+          "columns": [
+            "group_buy_id"
+          ],
+          "isUnique": false
+        },
+        "idx_activity_logs_created_at": {
+          "name": "idx_activity_logs_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "idx_activity_logs_shop_created_at": {
+          "name": "idx_activity_logs_shop_created_at",
+          "columns": [
+            "shop_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "activity_logs_shop_id_shops_id_fk": {
           "name": "activity_logs_shop_id_shops_id_fk",

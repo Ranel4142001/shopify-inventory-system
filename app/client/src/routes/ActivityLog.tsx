@@ -43,9 +43,10 @@ interface ActivityResponse {
   };
 }
 
-export function ActivityLog() {
-  const { data, loading, error } = useApi<ActivityResponse>('/activity?limit=50');
+export default function ActivityLog() {
+  const { data, loading, error } = useApi<ActivityLog[]>('/activity?limit=50');
 
+  console.log("Raw API Response:", { data, error, loading });
   return (
     <div style={{ padding: '24px' }}>
 
@@ -84,7 +85,7 @@ export function ActivityLog() {
           </div>
         )}
 
-        {!loading && data?.data?.length === 0 && (
+        {!loading && (!data || data.length === 0) && (
           <div style={{ padding: '60px', textAlign: 'center', color: '#6B7280' }}>
             <div style={{ fontSize: '32px', marginBottom: '12px' }}>📋</div>
             <p style={{ fontSize: '15px', fontWeight: '500' }}>No activity yet</p>
@@ -94,14 +95,14 @@ export function ActivityLog() {
           </div>
         )}
 
-        {data?.data?.map((log, index) => (
+        {data?.map((log, index) => (
           <div
             key={log.id}
             style={{
               display: 'flex',
               gap: '16px',
               padding: '16px 20px',
-              borderBottom: index < data.data.length - 1
+              borderBottom: index < data.length - 1
                 ? '1px solid #F3F4F6'
                 : 'none',
               alignItems: 'flex-start',
@@ -159,14 +160,14 @@ export function ActivityLog() {
       </div>
 
       {/* Pagination info */}
-      {data?.pagination && (
-        <div style={{
+      {data && (
+   <div style={{
           marginTop: '16px',
           fontSize: '13px',
           color: '#6B7280',
           textAlign: 'center',
         }}>
-          Showing {data.data.length} of {data.pagination.total} entries
+          Showing {data.length} of {data.length} entries
         </div>
       )}
 

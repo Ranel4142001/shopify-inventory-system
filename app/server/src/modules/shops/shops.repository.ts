@@ -43,7 +43,7 @@ export class ShopsRepository {
   async deactivate(id: string): Promise<void> {
     await db
       .update(shops)
-      .set({ isActive: 'false', updatedAt: new Date() })
+      .set({ isActive: false, updatedAt: new Date() })
       .where(eq(shops.id, id));
   }
 

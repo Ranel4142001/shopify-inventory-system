@@ -2,10 +2,9 @@ import { db } from './client';
 import { shops, sessions, rules, products, scores, activityLogs } from './schema';
 import { v4 as uuidv4 } from 'uuid';
 import { encrypt, generateAccessToken, generateRefreshToken } from '../shared/utils/tokenManager';
-import { connectDatabase } from './client';
 
 async function seed() {
-  console.log('🌱 Seeding database...');
+  console.log(' Seeding database...');
 
   // ── 1. Create Shop ───────────────────────────────────────────
   const shopId = uuidv4();
@@ -18,30 +17,31 @@ async function seed() {
     scope: 'read_products,write_products,read_orders,read_customers',
     email: 'admin@tactilelab.com',
     shopName: 'Tactile Lab',
-    isActive: 'true',
+    isActive: true,           // ✅ was: 'true' (string) — now correct boolean
     installedAt: new Date(),
     updatedAt: new Date(),
   }).onDuplicateKeyUpdate({
     set: {
       shopName: 'Tactile Lab',
       updatedAt: new Date(),
-    }
+    },
   });
 
-  // Get actual shop id (may already exist)
-  const existingShop = await db.select().from(shops)
-    .limit(1);
+  // Get the actual shop row (may have already existed before the upsert)
+  const existingShop = await db.select().from(shops).limit(1);
   const actualShopId = existingShop[0].id;
 
   console.log('✅ Shop created');
 
   // ── 2. Create Session ────────────────────────────────────────
   const sessionId = uuidv4();
+
   const accessToken = generateAccessToken({
     shopId: actualShopId,
     shop: shopDomain,
     sessionId,
   });
+
   const refreshToken = generateRefreshToken({
     shopId: actualShopId,
     shop: shopDomain,
@@ -53,11 +53,11 @@ async function seed() {
     shopId: actualShopId,
     accessToken: encrypt(accessToken),
     refreshToken: encrypt(refreshToken),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     createdAt: new Date(),
     updatedAt: new Date(),
   }).onDuplicateKeyUpdate({
-    set: { updatedAt: new Date() }
+    set: { updatedAt: new Date() },
   });
 
   console.log('✅ Session created');
@@ -166,14 +166,22 @@ async function seed() {
 
   const ruleIds: string[] = [];
 
+  // Manufacturing stages in order — used to derive each stage's status
+  const ALL_STAGES = [
+    'Funding', 'Design Review', 'Tooling',
+    'Injection Molding', 'Assembly', 'QC', 'Shipping',
+  ] as const;
+
   for (const gb of groupBuys) {
     const ruleId = gb.id;
     ruleIds.push(ruleId);
 
+    // ── 3a. Insert rule ──────────────────────────────────────
     await db.insert(rules).values({
       id: ruleId,
       shopId: actualShopId,
       productTitle: gb.productTitle,
+      // Derive a URL-safe handle from the product title
       productHandle: gb.productTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       shopifyProductId: null,
       status: gb.status,
@@ -184,24 +192,35 @@ async function seed() {
       currentFunding: gb.currentFunding,
       urgencyScore: gb.urgencyScore,
       notes: gb.notes,
+      // Spread createdAt randomly across the last 90 days to simulate real data
       createdAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
 
-    // ── 4. Create Manufacturing Stages ──────────────────────────
-    const allStages = [
-      'Funding', 'Design Review', 'Tooling',
-      'Injection Molding', 'Assembly', 'QC', 'Shipping',
-    ];
-    const currentStageIndex = allStages.indexOf(gb.currentStage);
+    // ── 3b. Insert manufacturing stages (products) ───────────
+    const currentStageIndex = ALL_STAGES.indexOf(gb.currentStage as typeof ALL_STAGES[number]);
 
-    for (let i = 0; i < allStages.length; i++) {
-      const stageName = allStages[i];
+    for (let i = 0; i < ALL_STAGES.length; i++) {
+      const stageName = ALL_STAGES[i];
       const isCompleted = i < currentStageIndex;
-      const isCurrent = i === currentStageIndex;
+      const isCurrent   = i === currentStageIndex;
+
+      // Space expected dates evenly backwards from the target ship date (14-day intervals)
       const expectedDate = new Date(
-        gb.targetShipDate.getTime() - (allStages.length - 1 - i) * 14 * 24 * 60 * 60 * 1000
+        gb.targetShipDate.getTime() - (ALL_STAGES.length - 1 - i) * 14 * 24 * 60 * 60 * 1000
       );
+
+      // Completed stages got finished slightly ahead of schedule (random 0–5 days early)
+      const actualDate = isCompleted
+        ? new Date(expectedDate.getTime() - Math.random() * 5 * 24 * 60 * 60 * 1000)
+        : null;
+
+      // Current stage is 'delayed' if the group buy has accumulated delay days
+      const stageStatus = isCompleted
+        ? 'completed'
+        : isCurrent
+          ? (gb.delayDays > 0 ? 'delayed' : 'in_progress')
+          : 'pending';
 
       await db.insert(products).values({
         id: uuidv4(),
@@ -209,14 +228,20 @@ async function seed() {
         stageName,
         orderIndex: i + 1,
         expectedDate,
-        actualDate: isCompleted ? new Date(expectedDate.getTime() - Math.random() * 5 * 24 * 60 * 60 * 1000) : null,
-        status: isCompleted ? 'completed' : isCurrent ? (gb.delayDays > 0 ? 'delayed' : 'in_progress') : 'pending',
+        actualDate,
+        status: stageStatus,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
     }
 
-    // ── 5. Create Urgency Scores ────────────────────────────────
+    // ── 3c. Insert urgency score snapshot ────────────────────
+    const scoreMessage =
+      gb.urgencyScore >= 75 ? 'Immediate action required — contact supplier and notify customers'
+      : gb.urgencyScore >= 50 ? 'Review this group buy today and update manufacturing stage'
+      : gb.urgencyScore >= 25 ? 'Monitor closely — check for supplier updates this week'
+      : 'On track — continue routine monitoring';
+
     await db.insert(scores).values({
       id: uuidv4(),
       ruleId,
@@ -224,21 +249,15 @@ async function seed() {
       daysUntilShip: gb.daysUntilShip,
       delayDays: gb.delayDays,
       customerCount: gb.customerCount,
-      message: gb.urgencyScore >= 75
-        ? 'Immediate action required — contact supplier and notify customers'
-        : gb.urgencyScore >= 50
-        ? 'Review this group buy today and update manufacturing stage'
-        : gb.urgencyScore >= 25
-        ? 'Monitor closely — check for supplier updates this week'
-        : 'On track — continue routine monitoring',
+      message: scoreMessage,
       reportedAt: new Date(),
       createdAt: new Date(),
     });
   }
 
-  console.log('✅ Group buys created');
+  console.log('✅ Group buys, stages, and scores created');
 
-  // ── 6. Create Activity Logs ──────────────────────────────────
+  // ── 4. Create Activity Logs ──────────────────────────────────
   const activities = [
     {
       actionType: 'alert_fired' as const,
@@ -261,7 +280,7 @@ async function seed() {
     {
       actionType: 'score_recalculated' as const,
       description: 'Urgency scores recalculated for all active group buys',
-      groupBuyIndex: -1,
+      groupBuyIndex: -1,  // -1 = shop-wide log, no specific group buy
       minutesAgo: 360,
     },
     {
@@ -303,7 +322,7 @@ async function seed() {
     {
       actionType: 'shop_installed' as const,
       description: 'Group Buy Manager installed on Tactile Lab store',
-      groupBuyIndex: -1,
+      groupBuyIndex: -1,  // shop-wide event
       minutesAgo: 10080,
     },
   ];
@@ -312,13 +331,15 @@ async function seed() {
     await db.insert(activityLogs).values({
       id: uuidv4(),
       shopId: actualShopId,
+      // groupBuyId is null for shop-wide events (groupBuyIndex === -1)
       groupBuyId: activity.groupBuyIndex >= 0 ? ruleIds[activity.groupBuyIndex] : null,
       actionType: activity.actionType,
       description: activity.description,
-      metadata: JSON.stringify({
+      // metadata is now a typed json column — pass an object directly, no JSON.stringify needed
+      metadata: {
         source: 'seed',
         timestamp: new Date().toISOString(),
-      }),
+      },
       createdAt: new Date(Date.now() - activity.minutesAgo * 60 * 1000),
     });
   }
@@ -326,19 +347,19 @@ async function seed() {
   console.log('✅ Activity logs created');
   console.log('');
   console.log('🎉 Seed complete! Summary:');
-  console.log(`   📦 7 Group Buys (various stages)`);
-  console.log(`   🏭 ${7 * 7} Manufacturing stage records`);
-  console.log(`   📊 7 Urgency score records`);
+  console.log(`   📦 ${groupBuys.length} Group Buys (various stages)`);
+  console.log(`   🏭 ${groupBuys.length * ALL_STAGES.length} Manufacturing stage records`);
+  console.log(`   📊 ${groupBuys.length} Urgency score records`);
   console.log(`   📋 ${activities.length} Activity log entries`);
   console.log('');
   console.log('Urgency ranking:');
-  console.log('   🚨 95 — TL-Carbon TKL (Critical — QC issues)');
-  console.log('   🚨 88 — TL-Obsidian 65% (Critical — ships in 28d, 14d delay)');
-  console.log('   ⚠️  72 — TL-Cosmos 75% (High — 7d delay)');
-  console.log('   ⚠️  62 — TL-Eclipse Pro 65% (High — ships in 3 days)');
-  console.log('   🔵 35 — TL-Glacier Ice Keycaps (Medium)');
+  console.log('   🚨 95 — TL-Carbon TKL          (Critical — QC issues)');
+  console.log('   🚨 88 — TL-Obsidian 65%         (Critical — ships in 28d, 14d delay)');
+  console.log('   ⚠️  72 — TL-Cosmos 75%           (High — 7d delay)');
+  console.log('   ⚠️  62 — TL-Eclipse Pro 65%      (High — ships in 3 days)');
+  console.log('   🔵 35 — TL-Glacier Ice Keycaps  (Medium)');
   console.log('   ✅ 15 — TL-Phantom 60% Wireless (Low — 167 days out)');
-  console.log('   ✅  0 — TL-Ember Switch Set (Fulfilled)');
+  console.log('   ✅  0 — TL-Ember Switch Set      (Fulfilled)');
 
   process.exit(0);
 }

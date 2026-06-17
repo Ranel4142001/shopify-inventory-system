@@ -1,17 +1,23 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate,    useNavigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from 'react-router-dom';
 import { AppFrame } from './components/Layout/AppFrame';
 import { Dashboard } from './routes/Dashboard';
 import { RuleEditor } from './routes/RuleEditor';
-import { ActivityLog } from './routes/ActivityLog';
+import  ActivityLog from './routes/ActivityLog';
 import { Settings } from './routes/Settings';
 import './styles/global.css';
 
-// Group Buys list page (simple wrapper)
+// Group Buys list page — must be INSIDE BrowserRouter to use useNavigate
 function GroupBuysList() {
   const [data, setData] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(true)
-  const navigate = useNavigate();
+  const [loading, setLoading] = React.useState(true);
+  const navigate = useNavigate(); // ✅ correct — inside BrowserRouter
 
   React.useEffect(() => {
     fetch('/api/rules', { credentials: 'include' })
@@ -29,7 +35,12 @@ function GroupBuysList() {
         marginBottom: '24px',
       }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '4px' }}>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: '4px',
+          }}>
             Group Buys
           </h1>
           <p style={{ fontSize: '14px', color: '#6B7280' }}>
