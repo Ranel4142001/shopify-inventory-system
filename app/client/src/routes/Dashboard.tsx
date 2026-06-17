@@ -23,12 +23,6 @@ interface DashboardData {
     alerts: string[];
     recommendation: string;
   }>;
-  recentActivity: Array<{
-    id: string;
-    actionType: string;
-    description: string;
-    createdAt: string;
-  }>;
 }
 
 const STAT_CARDS = (stats: DashboardData['stats']) => [
