@@ -4,8 +4,8 @@ import { env } from '../../config/env';
 
 const COOKIE_OPTIONS_BASE = {
   httpOnly: true,
-  secure: !env.IS_DEV,
-  sameSite: 'lax' as const,
+  secure: true,
+  sameSite: 'none' as const,
   path: '/',
 };
 

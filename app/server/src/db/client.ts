@@ -37,3 +37,4 @@ export async function connectDatabase(): Promise<void> {
 }
 
 export { pool };
+
