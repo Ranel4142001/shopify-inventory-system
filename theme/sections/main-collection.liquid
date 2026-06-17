@@ -20,7 +20,7 @@
 
       <!-- Filter Tags -->
       <div class="collection-page__filters">
-        
+        <a
           href="{{ collection.url }}"
           class="filter-tag {% unless current_tags %}is-active{% endunless %}"
         >
@@ -28,7 +28,7 @@
         </a>
         {% for tag in collection.all_tags %}
           {% if collection.tags contains tag %}
-            
+            <a
               href="{{ collection.url }}/{{ tag | handle }}"
               class="filter-tag {% if current_tags contains tag %}is-active{% endif %}"
             >

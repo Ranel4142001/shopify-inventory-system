@@ -18,6 +18,14 @@
     document.body.style.overflow = 'hidden';
   }
 
+  // Auto-open cart drawer on page reload if flag is set
+  if (sessionStorage.getItem('open_cart') === 'true') {
+    sessionStorage.removeItem('open_cart');
+    setTimeout(() => {
+      openCartDrawer();
+    }, 400);
+  }
+
   function closeCartDrawer() {
     if (!cartDrawer) return;
     cartDrawer.setAttribute('aria-hidden', 'true');

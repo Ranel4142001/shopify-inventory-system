@@ -1,0 +1,16 @@
+<div class="container page-section">
+  <header class="page-section__header">
+    <h1 class="page-section__title">{{ page.title | escape }}</h1>
+  </header>
+  <div class="page-section__content">
+    {{ page.content }}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Page",
+  "tag": "section",
+  "class": "section"
+}
+{% endschema %}

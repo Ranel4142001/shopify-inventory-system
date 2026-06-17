@@ -1,11 +1,11 @@
 {
   "current": {
-    "color_primary": "#00FF94",
-    "color_background": "#0A0A0A",
-    "color_surface": "#141414",
-    "color_text": "#FFFFFF",
-    "color_text_muted": "#888888",
-    "color_border": "#2A2A2A",
+    "color_primary": "#00F0FF",
+    "color_background": "#0e0b2f",
+    "color_surface": "#171530",
+    "color_text": "#F3F4F6",
+    "color_text_muted": "#928fb0",
+    "color_border": "#252147",
     "font_heading": "space_grotesk_n7",
     "font_body": "inter_n4",
     "page_width": 1280,
