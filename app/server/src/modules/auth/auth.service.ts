@@ -21,8 +21,9 @@ export class AuthService {
       `https://${shop}/admin/oauth/authorize` +
       `?client_id=${apiKey}` +
       `&scope=${scopes}` +
-      `&redirect_uri=${redirectUri}` +
-      `&state=${nonce}`;
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${nonce}` +
+      `&grant_options[]=value`;
 
     return { url, nonce };
   }
