@@ -22,7 +22,7 @@
       <ul class="header__nav-list">
         {% for link in section.settings.menu.links %}
           <li class="header__nav-item">
-            
+            <a
               href="{{ link.url }}"
               class="header__nav-link {% if link.active %}is-active{% endif %}"
             >
@@ -81,7 +81,7 @@
     <ul class="header__mobile-nav-list">
       {% for link in section.settings.menu.links %}
         <li>
-          
+          <a
             href="{{ link.url }}"
             class="header__mobile-nav-link {% if link.active %}is-active{% endif %}"
           >

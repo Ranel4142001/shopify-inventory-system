@@ -62,6 +62,15 @@ const STAT_CARDS = (stats: DashboardData['stats']) => [
   },
 ];
 
+// Helper to parse leading emojis from alert text
+function cleanAlertText(alertStr: string) {
+  const emojiMatch = alertStr.match(/^(\p{Extended_Pictographic})\s*(.*)$/u);
+  if (emojiMatch) {
+    return { icon: emojiMatch[1], text: emojiMatch[2] };
+  }
+  return { icon: '⚠️', text: alertStr };
+}
+
 export function Dashboard() {
   const { data, loading, error } = useApi<DashboardData>('/dashboard');
 
@@ -88,82 +97,67 @@ export function Dashboard() {
   );
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '24px', maxWidth: '1280px', margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{
-          fontSize: '24px',
-          fontWeight: '700',
-          color: '#111827',
-          marginBottom: '4px',
-        }}>
-          Dashboard
-        </h1>
-        <p style={{ fontSize: '14px', color: '#6B7280' }}>
-          Group buy fulfillment overview — ranked by urgency
-        </p>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: '4px',
+          }}>
+            Dashboard
+          </h1>
+          <p style={{ fontSize: '14px', color: '#6B7280' }}>
+            Group buy fulfillment overview — ranked by urgency
+          </p>
+        </div>
+        <div>
+          <Link
+            to="/group-buys/new"
+            style={{
+              background: '#059669',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 18px',
+              fontSize: '14px',
+              fontWeight: '600',
+              textDecoration: 'none',
+              display: 'inline-block',
+              transition: 'background 0.15s',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#047857'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#059669'}
+          >
+            + New Group Buy
+          </Link>
+        </div>
       </div>
 
-      {/* Critical Alerts */}
-      {criticalBuys.length > 0 && (
-        <div style={{ marginBottom: '24px' }}>
-          <AlertBanner
-            alerts={criticalBuys
-              .slice(0, 3)
-              .flatMap(b => b.alerts)
-              .slice(0, 3)}
-            level="critical"
-          />
-        </div>
-      )}
-
       {/* Stat Cards */}
-      <div style={{
+      <div className="stats-grid" style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
         gap: '16px',
-        marginBottom: '32px',
+        marginBottom: '24px',
       }}>
         {STAT_CARDS(data.stats).map(card => (
-          <div key={card.label} style={{
-            background: '#fff',
-            border: '1px solid #E5E7EB',
-            borderRadius: '12px',
-            padding: '20px',
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '12px',
-            }}>
-              <span style={{
-                fontSize: '11px',
-                fontWeight: '600',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: '#6B7280',
-              }}>
+          <div key={card.label} className="tl-card tl-metric-card">
+            <div className="tl-metric-card__header">
+              <span className="tl-metric-card__label">
                 {card.label}
               </span>
-              <span style={{
-                width: '32px', height: '32px',
+              <span className="tl-metric-card__icon-wrapper" style={{
                 background: card.bg,
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '16px',
               }}>
                 {card.icon}
               </span>
             </div>
-            <div style={{
-              fontSize: '28px',
-              fontWeight: '700',
+            <div className="tl-metric-card__value" style={{
               color: card.color,
-              lineHeight: 1,
             }}>
               {card.value}
             </div>
@@ -172,7 +166,7 @@ export function Dashboard() {
       </div>
 
       {/* Two column layout */}
-      <div style={{
+      <div className="dashboard-grid" style={{
         display: 'grid',
         gridTemplateColumns: '1fr 360px',
         gap: '24px',
@@ -180,12 +174,7 @@ export function Dashboard() {
       }}>
 
         {/* Ranked Group Buys */}
-        <div style={{
-          background: '#fff',
-          border: '1px solid #E5E7EB',
-          borderRadius: '12px',
-          overflow: 'hidden',
-        }}>
+        <div className="tl-card" style={{ background: '#fff' }}>
           <div style={{
             padding: '16px 20px',
             borderBottom: '1px solid #E5E7EB',
@@ -198,7 +187,7 @@ export function Dashboard() {
             </h2>
             <Link
               to="/group-buys"
-              style={{ fontSize: '13px', color: '#059669', textDecoration: 'none' }}
+              style={{ fontSize: '13px', color: '#059669', textDecoration: 'none', fontWeight: '600' }}
             >
               View all →
             </Link>
@@ -206,8 +195,8 @@ export function Dashboard() {
 
           {data.rankedGroupBuys.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280' }}>
-              No group buys yet.{' '}
-              <Link to="/group-buys/new" style={{ color: '#059669' }}>
+              No active group buys yet.{' '}
+              <Link to="/group-buys/new" style={{ color: '#059669', fontWeight: '600' }}>
                 Create one
               </Link>
             </div>
@@ -231,21 +220,34 @@ export function Dashboard() {
                       </span>
                     </td>
                     <td>
-                      <Link
-                        to={`/group-buys/${item.ruleId}`}
-                        style={{
-                          fontWeight: '500',
-                          color: '#111827',
-                          textDecoration: 'none',
-                        }}
-                      >
-                        {item.productTitle}
-                      </Link>
-                      {item.delayDays > 0 && (
-                        <div style={{ fontSize: '12px', color: '#EF4444', marginTop: '2px' }}>
-                          Delayed {item.delayDays}d
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <Link
+                          to={`/group-buys/${item.ruleId}`}
+                          style={{
+                            fontWeight: '600',
+                            color: '#111827',
+                            textDecoration: 'none',
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                        >
+                          {item.productTitle}
+                        </Link>
+                        {item.delayDays > 0 && (
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#D82C0D',
+                            background: '#FFF8F7',
+                            border: '1px solid #FFF1F0',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            display: 'inline-block',
+                          }}>
+                            Delayed {item.delayDays}d
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <ScoreBadge
@@ -253,13 +255,13 @@ export function Dashboard() {
                         level={item.urgencyLevel}
                       />
                     </td>
-                    <td style={{ fontSize: '13px', color: '#374151' }}>
+                    <td style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>
                       {item.daysUntilShip <= 0
                         ? <span style={{ color: '#EF4444', fontWeight: '600' }}>Overdue</span>
                         : `${item.daysUntilShip}d`
                       }
                     </td>
-                    <td style={{ fontSize: '13px', color: '#374151' }}>
+                    <td style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>
                       {item.customerCount.toLocaleString()}
                     </td>
                   </tr>
@@ -269,63 +271,55 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* Recent Activity */}
-        <div style={{
-          background: '#fff',
-          border: '1px solid #E5E7EB',
-          borderRadius: '12px',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid #E5E7EB',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <h2 style={{ fontSize: '15px', fontWeight: '600', color: '#111827' }}>
-              Recent Activity
-            </h2>
-            <Link
-              to="/activity"
-              style={{ fontSize: '13px', color: '#059669', textDecoration: 'none' }}
-            >
-              View all →
-            </Link>
-          </div>
-
-          <div style={{ padding: '8px 0' }}>
-            {data.recentActivity.length === 0 ? (
-              <div style={{ padding: '32px 20px', textAlign: 'center', color: '#6B7280', fontSize: '14px' }}>
-                No activity yet
-              </div>
-            ) : (
-              data.recentActivity.map(log => (
-                <div key={log.id} style={{
-                  padding: '12px 20px',
-                  borderBottom: '1px solid #F3F4F6',
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'flex-start',
-                }}>
-                  <div style={{
-                    width: '8px', height: '8px',
-                    borderRadius: '50%',
-                    background: '#059669',
-                    marginTop: '6px',
-                    flexShrink: 0,
-                  }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '13px', color: '#111827', lineHeight: 1.4 }}>
-                      {log.description}
-                    </p>
-                    <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '3px' }}>
-                      {new Date(log.createdAt).toLocaleString()}
-                    </p>
-                  </div>
+        {/* Right column sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Action Required Card */}
+          <div className="tl-card" style={{ background: '#fff' }}>
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #E5E7EB',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <h2 style={{ fontSize: '15px', fontWeight: '600', color: '#111827' }}>
+                Action Required
+              </h2>
+              {criticalBuys.length > 0 && (
+                <span className="pulse-icon" style={{ fontSize: '14px' }}>🚨</span>
+              )}
+            </div>
+            
+            <div className="tl-alerts-list">
+              {criticalBuys.length === 0 ? (
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#6B7280', fontSize: '13px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>✅</div>
+                  <p style={{ fontWeight: '600', color: '#111827', marginBottom: '2px' }}>All systems on track</p>
+                  <p style={{ fontSize: '12px', color: '#6D7175' }}>No critical group buy alerts at this time.</p>
                 </div>
-              ))
-            )}
+              ) : (
+                criticalBuys.slice(0, 5).flatMap(b => 
+                  b.alerts.map((alertStr, idx) => {
+                    const parsed = cleanAlertText(alertStr);
+                    const itemLevel = b.urgencyLevel === 'critical' ? 'critical' : 'high';
+                    return (
+                      <Link
+                        key={`${b.ruleId}-${idx}`}
+                        to={`/group-buys/${b.ruleId}`}
+                        className={`tl-alert-item tl-alert-item--${itemLevel}`}
+                      >
+                        <span className="tl-alert-item__icon">{parsed.icon}</span>
+                        <div className="tl-alert-item__content">
+                          {parsed.text}
+                        </div>
+                        <span className="tl-alert-item__action">View →</span>
+                      </Link>
+                    );
+                  })
+                )
+              )}
+            </div>
           </div>
         </div>
 

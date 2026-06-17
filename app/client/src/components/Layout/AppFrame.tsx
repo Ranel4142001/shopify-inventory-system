@@ -16,10 +16,10 @@ export function AppFrame({ children }: AppFrameProps) {
   const location = useLocation();
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F6F6F7' }}>
+    <div className="app-layout-frame" style={{ display: 'flex', minHeight: '100vh', background: '#F4F6F8' }}>
 
       {/* Sidebar */}
-      <aside style={{
+      <aside className="app-sidebar" style={{
         width: '220px',
         background: '#fff',
         borderRight: '1px solid #E5E7EB',
@@ -51,13 +51,14 @@ export function AppFrame({ children }: AppFrameProps) {
         </div>
 
         {/* Nav */}
-        <nav style={{ padding: '12px 8px', flex: 1 }}>
+        <nav className="app-sidebar-nav" style={{ padding: '12px 8px', flex: 1 }}>
           {NAV_ITEMS.map(item => {
             const isActive = location.pathname === item.path;
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                className="app-sidebar-nav-link"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -81,7 +82,7 @@ export function AppFrame({ children }: AppFrameProps) {
         </nav>
 
         {/* Footer */}
-        <div style={{
+        <div className="app-sidebar-footer" style={{
           padding: '16px',
           borderTop: '1px solid #E5E7EB',
           fontSize: '12px',

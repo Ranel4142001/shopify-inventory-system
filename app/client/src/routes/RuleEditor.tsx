@@ -24,11 +24,11 @@ interface FormData {
   status: string;
   targetShipDate: string;
   currentStage: string;
-  customerCount: number;
-  fundingGoal: number;
-  currentFunding: number;
+  customerCount: string;
+  fundingGoal: string;
+  currentFunding: string;
   notes: string;
-  delayDays: number;
+  delayDays: string;
 }
 
 const DEFAULT_FORM: FormData = {
@@ -36,11 +36,11 @@ const DEFAULT_FORM: FormData = {
   status: 'open',
   targetShipDate: '',
   currentStage: 'Funding',
-  customerCount: 0,
-  fundingGoal: 0,
-  currentFunding: 0,
+  customerCount: '0',
+  fundingGoal: '0',
+  currentFunding: '0',
   notes: '',
-  delayDays: 0,
+  delayDays: '0',
 };
 
 export function RuleEditor() {
@@ -53,6 +53,11 @@ export function RuleEditor() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scoreResult, setScoreResult] = useState<any>(null);
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success',
+  });
 
   // Load existing rule if editing
   useEffect(() => {
@@ -69,28 +74,34 @@ export function RuleEditor() {
               ? new Date(rule.targetShipDate).toISOString().split('T')[0]
               : '',
             currentStage: rule.currentStage || 'Funding',
-            customerCount: rule.customerCount || 0,
-            fundingGoal: rule.fundingGoal || 0,
-            currentFunding: rule.currentFunding || 0,
+            customerCount: String(rule.customerCount ?? 0),
+            fundingGoal: String(rule.fundingGoal ?? 0),
+            currentFunding: String(rule.currentFunding ?? 0),
             notes: rule.notes || '',
-            delayDays: rule.latestScore?.delayDays || 0,
+            delayDays: String(rule.latestScore?.delayDays ?? 0),
           });
         }
       })
-      .catch(() => setError('Failed to load group buy'))
+      .catch((err: any) => setError(`Failed to load group buy: ${err?.message || 'Server did not respond.'}`))
       .finally(() => setLoading(false));
   }, [id, isEdit]);
 
   function handleChange(
-    e: React.ChangeEvent <
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value, type } = e.target;
-    setForm(prev => ({
-      ...prev,
-      [name]: type === 'number' ? Number(value) : value,
-    }));
+    if (type === 'text' && ['customerCount', 'fundingGoal', 'currentFunding', 'delayDays'].includes(name)) {
+      // Only allow digits for numeric fields
+      if (value !== '' && !/^\d*$/.test(value)) return;
+      setForm(prev => ({ ...prev, [name]: value }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
+  }
+
+  function showToast(message: string, type: 'success' | 'error' = 'success') {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,42 +109,58 @@ export function RuleEditor() {
     setSaving(true);
     setError(null);
 
+    const payload = {
+      productTitle: form.productTitle,
+      status: form.status,
+      targetShipDate: form.targetShipDate,
+      currentStage: form.currentStage,
+      customerCount: Number(form.customerCount) || 0,
+      fundingGoal: Number(form.fundingGoal) || 0,
+      currentFunding: Number(form.currentFunding) || 0,
+      notes: form.notes,
+    };
+
+    let ruleId = id;
+
+    // Step 1: Save the group buy
     try {
-      const payload = {
-        productTitle: form.productTitle,
-        status: form.status,
-        targetShipDate: form.targetShipDate,
-        currentStage: form.currentStage,
-        customerCount: form.customerCount,
-        fundingGoal: form.fundingGoal,
-        currentFunding: form.currentFunding,
-        notes: form.notes,
-      };
-
-      let ruleId = id;
-
       if (isEdit) {
         await apiClient.put(`/rules/${id}`, payload);
       } else {
         const res = await apiClient.post<any>('/rules', payload);
         ruleId = res.data?.id;
+        if (!ruleId) throw new Error('No ID returned from server after creating group buy.');
       }
+    } catch (err: any) {
+      const msg = isEdit
+        ? `Failed to update group buy: ${err?.message || 'Server did not respond.'}`
+        : `Failed to create group buy: ${err?.message || 'Server did not respond.'}`;
+      setError(msg);
+      showToast(msg, 'error');
+      setSaving(false);
+      return;
+    }
 
-      // Score the rule after save
+    // Step 2: Score the rule
+    try {
       if (ruleId) {
         const scoreRes = await apiClient.post<any>(
           `/scoring/${ruleId}/score`,
-          { delayDays: form.delayDays }
+          { delayDays: Number(form.delayDays) || 0 }
         );
         if (scoreRes.success) setScoreResult(scoreRes.data);
       }
-
-      setTimeout(() => navigate('/group-buys'), 1500);
-    } catch {
-      setError('Failed to save group buy');
-    } finally {
-      setSaving(false);
+    } catch (err: any) {
+      // Scoring failure is non-blocking — group buy was saved, just warn
+      const msg = `Group buy saved, but scoring failed: ${err?.message || 'Could not calculate urgency score.'}`;
+      setError(msg);
+      showToast(msg, 'error');
     }
+
+    // Step 3: Show success message and redirect
+    showToast(isEdit ? 'Group Buy updated successfully!' : 'Group Buy created successfully!');
+    setTimeout(() => navigate('/group-buys'), 3000);
+    setSaving(false);
   }
 
   const inputStyle: React.CSSProperties = {
@@ -310,6 +337,7 @@ export function RuleEditor() {
               name="targetShipDate"
               value={form.targetShipDate}
               onChange={handleChange}
+              min={new Date().toISOString().split('T')[0]}
               required
             />
           </div>
@@ -319,33 +347,33 @@ export function RuleEditor() {
               <label style={labelStyle}>Customer Count</label>
               <input
                 style={inputStyle}
-                type="number"
+                type="text"
+                inputMode="numeric"
                 name="customerCount"
                 value={form.customerCount}
                 onChange={handleChange}
-                min="0"
               />
             </div>
             <div style={fieldStyle}>
               <label style={labelStyle}>Funding Goal ($)</label>
               <input
                 style={inputStyle}
-                type="number"
+                type="text"
+                inputMode="numeric"
                 name="fundingGoal"
                 value={form.fundingGoal}
                 onChange={handleChange}
-                min="0"
               />
             </div>
             <div style={fieldStyle}>
               <label style={labelStyle}>Current Funding ($)</label>
               <input
                 style={inputStyle}
-                type="number"
+                type="text"
+                inputMode="numeric"
                 name="currentFunding"
                 value={form.currentFunding}
                 onChange={handleChange}
-                min="0"
               />
             </div>
           </div>
@@ -359,11 +387,11 @@ export function RuleEditor() {
             </label>
             <input
               style={inputStyle}
-              type="number"
+              type="text"
+              inputMode="numeric"
               name="delayDays"
               value={form.delayDays}
               onChange={handleChange}
-              min="0"
             />
           </div>
 
@@ -416,6 +444,90 @@ export function RuleEditor() {
           </button>
         </div>
       </form>
+
+      {/* Centered Modal Box */}
+      {toast.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(17, 24, 39, 0.18)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: toast.type === 'success'
+                ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)'
+                : 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
+              borderRadius: '16px',
+              boxShadow: toast.type === 'success'
+                ? '0 12px 32px rgba(16, 185, 129, 0.25)'
+                : '0 12px 32px rgba(220, 38, 38, 0.25)',
+              border: `1px solid ${toast.type === 'success' ? '#6EE7B7' : '#FCA5A5'}`,
+              maxWidth: '360px',
+              width: '90%',
+              padding: '28px 28px 20px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: toast.type === 'success' ? '#10B981' : '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+                fontSize: '22px',
+                color: '#fff',
+              }}
+            >
+              {toast.type === 'success' ? '✓' : '!'}
+            </div>
+
+            <div
+              style={{
+                fontSize: '15px',
+                fontWeight: '600',
+                color: toast.type === 'success' ? '#065F46' : '#991B1B',
+                marginBottom: '20px',
+                lineHeight: 1.5,
+              }}
+            >
+              {toast.message}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              style={{
+                background: toast.type === 'success' ? '#10B981' : '#DC2626',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 32px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                width: '100%',
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
