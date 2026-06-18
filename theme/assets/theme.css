@@ -147,6 +147,37 @@ ul { list-style: none; }
   background: rgba(0,255,148,0.05);
 }
 
+/* ── Filter Tag Select Dropdown ────────────────────────────── */
+.filter-tag-select {
+  display: inline-block;
+  padding: 6px 44px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  background-color: rgba(0, 255, 148, 0.05);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300F0FF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 12px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  transition: all 0.2s;
+  text-align: center;
+  text-align-last: center;
+}
+.filter-tag-select:hover {
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+.filter-tag-select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: center;
+}
+
 /* ── Price ───────────────────────────────────────────────────── */
 .price-wrapper { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .price { font-size: 16px; font-weight: 600; color: var(--color-text); }
@@ -246,6 +277,75 @@ ul { list-style: none; }
 .header__mobile-nav-link.is-active {
   color: var(--color-text);
   background: var(--color-surface);
+}
+
+/* Search Bar Dropdown */
+.header__search-bar {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  width: 100%;
+  background: rgba(14, 11, 47, 0.95);
+  border-bottom: 2px solid var(--color-primary);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 16px 0;
+  z-index: 99;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateY(-20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+.header__search-bar.is-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.header__search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 6px 16px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.header__search-form:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+.header__search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 15px;
+  outline: none;
+  width: 100%;
+  padding: 8px 0;
+}
+.header__search-submit {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+.header__search-submit:hover {
+  color: var(--color-primary);
+}
+.header__search-submit svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* ── Hero ────────────────────────────────────────────────────── */
@@ -904,7 +1004,10 @@ ul { list-style: none; }
 
 /* ── Collection Page ─────────────────────────────────────────── */
 .collection-page { padding: 48px 0 80px; }
-.collection-page__header { margin-bottom: 32px; }
+.collection-page__header {
+  margin-bottom: 32px;
+  text-align: center;
+}
 .collection-page__title {
   font-family: var(--font-heading);
   font-size: clamp(28px, 4vw, 48px);
@@ -917,6 +1020,8 @@ ul { list-style: none; }
   color: var(--color-text-muted);
   max-width: 600px;
   margin-bottom: 8px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .collection-page__count {
   font-size: 13px;
@@ -925,14 +1030,19 @@ ul { list-style: none; }
 .collection-page__toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 32px;
-  gap: 16px;
+  gap: 24px;
   flex-wrap: wrap;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--color-border);
 }
-.collection-page__filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.collection-page__filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
 .sort-select {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

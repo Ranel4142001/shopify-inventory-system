@@ -1,0 +1,80 @@
+<div class="collection-page search-page">
+  <div class="container">
+
+    <!-- Search Header -->
+    <div class="collection-page__header text-center" style="margin-bottom: 48px; text-align: center;">
+      <h1 class="collection-page__title">
+        {% if search.performed %}
+          Search Results
+        {% else %}
+          Search Our Store
+        {% endif %}
+      </h1>
+      <p class="collection-page__count">
+        {% if search.performed %}
+          {{ search.results_count }} results found for "{{ search.terms }}"
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Search Form (Page Body) -->
+    <div class="search-page__form-wrapper" style="max-width: 600px; margin: 0 auto 64px;">
+      <form action="/search" method="get" role="search" class="header__search-form" style="display: flex; align-items: center; gap: 12px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 6px 16px;">
+        <input
+          type="search"
+          name="q"
+          value="{{ search.terms | escape }}"
+          placeholder="Search for keyboards, keycaps, switches..."
+          class="header__search-input"
+          style="flex: 1; background: none; border: none; color: var(--color-text); font-size: 15px; outline: none; padding: 8px 0;"
+        >
+        <button type="submit" class="header__search-submit" aria-label="Submit search" style="background: none; border: none; color: var(--color-text-muted); cursor: pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Search Results Grid -->
+    {% if search.performed %}
+      {% if search.results.size > 0 %}
+        {% paginate search.results by 12 %}
+          <div class="collection-page__grid">
+            {% for item in search.results %}
+              {% if item.object_type == 'product' %}
+                {% render 'product-card', product: item %}
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <!-- Pagination -->
+          {% if paginate.pages > 1 %}
+            <div class="pagination" style="display: flex; justify-content: center; gap: 16px; margin-top: 48px;">
+              {% if paginate.previous %}
+                <a href="{{ paginate.previous.url }}" class="pagination__btn btn btn--outline">&larr; Previous</a>
+              {% endif %}
+              {% for part in paginate.parts %}
+                {% if part.is_link %}
+                  <a href="{{ part.url }}" class="pagination__page" style="color: var(--color-text-muted); text-decoration: none; padding: 4px 8px;">{{ part.title }}</a>
+                {% else %}
+                  <span class="pagination__page is-active" style="color: var(--color-primary); font-weight: 700; padding: 4px 8px;">{{ part.title }}</span>
+                {% endif %}
+              {% endfor %}
+              {% if paginate.next %}
+                <a href="{{ paginate.next.url }}" class="pagination__btn btn btn--outline">Next &rarr;</a>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endpaginate %}
+      {% else %}
+        <div class="collection-page__empty" style="text-align: center; padding: 64px 0;">
+          <p style="color: var(--color-text-muted); font-size: 16px; margin-bottom: 24px;">No products matched your search. Try different keywords.</p>
+          <a href="/collections/all" class="btn btn--primary">Browse All Products</a>
+        </div>
+      {% endif %}
+    {% endif %}
+
+  </div>
+</div>

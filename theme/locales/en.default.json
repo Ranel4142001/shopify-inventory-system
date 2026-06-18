@@ -11,7 +11,8 @@
     "collections": "Collections",
     "products": "Products",
     "about": "About",
-    "cart": "Cart"
+    "cart": "Cart",
+    "menu": "Menu"
   },
   "products": {
     "add_to_cart": "Add to Cart",
@@ -55,5 +56,11 @@
     "newsletter_placeholder": "your@email.com",
     "newsletter_submit": "Subscribe",
     "rights": "All rights reserved"
+  },
+  "gift_cards": {
+    "issued": {
+      "title": "Gift card for {{ value }}",
+      "subtext": "Your Tactile Lab gift card is ready"
+    }
   }
 }

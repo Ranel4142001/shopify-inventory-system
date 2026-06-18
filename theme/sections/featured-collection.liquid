@@ -46,16 +46,42 @@
         {% endfor %}
       {% else %}
         {% for i in (1..4) %}
+          {% case i %}
+            {% when 1 %}
+              {% assign p_title = 'TL-Carbon TKL' %}
+              {% assign p_image = 'keyboard_carbon_tkl.png' %}
+              {% assign p_price = '$169.00' %}
+            {% when 2 %}
+              {% assign p_title = 'TL-Cosmos 75% Aluminum' %}
+              {% assign p_image = 'keyboard_cosmos_75.png' %}
+              {% assign p_price = '$189.00' %}
+            {% when 3 %}
+              {% assign p_title = 'TL-Eclipse Pro 65%' %}
+              {% assign p_image = 'keyboard_eclipse_65.png' %}
+              {% assign p_price = '$199.00' %}
+            {% when 4 %}
+              {% assign p_title = 'TL-Ember Switch Set (Linear)' %}
+              {% assign p_image = 'keyboard_ember_switch.png' %}
+              {% assign p_price = '$29.00' %}
+          {% endcase %}
           <div class="featured-collection__item">
             <div class="product-card product-card--placeholder">
               <div class="product-card__image-wrapper">
-                {{ 'product-' | append: i | placeholder_svg_tag: 'product-card__image' }}
+                <img
+                  src="{{ p_image | asset_url }}"
+                  alt="{{ p_title }}"
+                  class="product-card__image"
+                  loading="lazy"
+                  width="360"
+                  height="360"
+                  style="object-fit: cover;"
+                >
               </div>
               <div class="product-card__info">
                 <p class="product-card__vendor">Tactile Lab</p>
-                <h3 class="product-card__title">Sample Keyboard {{ i }}</h3>
+                <h3 class="product-card__title">{{ p_title }}</h3>
                 <div class="price-wrapper">
-                  <span class="price">$149.00</span>
+                  <span class="price">{{ p_price }}</span>
                 </div>
               </div>
             </div>
