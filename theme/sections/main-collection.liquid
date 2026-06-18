@@ -9,60 +9,40 @@
           {{ collection.description }}
         </div>
       {% endif %}
-      <p class="collection-page__count">
-        {{ collection.products_count }}
-        {{ 'collection.products_count' | t }}
-      </p>
     </div>
 
     <!-- Toolbar -->
     <div class="collection-page__toolbar">
-
-      <!-- Filter Tags -->
-      <div class="collection-page__filters">
-        <a
-          href="{{ collection.url }}"
-          class="filter-tag {% unless current_tags %}is-active{% endunless %}"
-        >
-          All
-        </a>
-        {% for tag in collection.all_tags %}
-          {% if collection.tags contains tag %}
-            <a
-              href="{{ collection.url }}/{{ tag | handle }}"
-              class="filter-tag {% if current_tags contains tag %}is-active{% endif %}"
-            >
-              {{ tag }}
-            </a>
-          {% endif %}
-        {% endfor %}
-      </div>
-
-      <!-- Sort -->
       <div class="collection-page__sort">
         <label for="sort-select" class="sr-only">Sort by</label>
         <select
           id="sort-select"
-          class="sort-select"
+          class="filter-tag-select"
           onchange="window.location.href = this.value"
         >
           <option
-            value="{{ collection.url }}?sort_by=manual"
-            {% if collection.sort_by == 'manual' %}selected{% endif %}
+            value="{{ collection.url }}"
+            {% if collection.sort_by == blank or collection.sort_by == 'manual' %}selected{% endif %}
           >
-            Featured
+            All
+          </option>
+          <option
+            value="{{ collection.url }}?sort_by=best-selling"
+            {% if collection.sort_by == 'best-selling' %}selected{% endif %}
+          >
+            Best selling
           </option>
           <option
             value="{{ collection.url }}?sort_by=price-ascending"
             {% if collection.sort_by == 'price-ascending' %}selected{% endif %}
           >
-            Price: Low to High
+            Lowest to highest
           </option>
           <option
             value="{{ collection.url }}?sort_by=price-descending"
             {% if collection.sort_by == 'price-descending' %}selected{% endif %}
           >
-            Price: High to Low
+            Highest to lowest
           </option>
           <option
             value="{{ collection.url }}?sort_by=created-descending"
@@ -72,7 +52,6 @@
           </option>
         </select>
       </div>
-
     </div>
 
     <!-- Products Grid -->

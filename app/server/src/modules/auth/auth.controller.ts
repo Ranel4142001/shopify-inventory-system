@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
 import { env } from '../../config/env';
-import {
-  setAccessTokenCookie,
-  setRefreshTokenCookie,
-  setShopCookie,
-  clearAuthCookies,
-} from '../../shared/middleware/cookieAuth';
+import { 
+  setAccessTokenCookie, 
+  setRefreshTokenCookie, 
+  setShopCookie, 
+  clearAuthCookies 
+} from '../../shared/utils';
 import { BadRequestError } from '../../shared/errors/AppError';
 
 // In-memory nonce store (use Redis in production)

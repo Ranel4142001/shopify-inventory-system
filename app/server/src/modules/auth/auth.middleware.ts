@@ -1,28 +1,28 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../../shared/types/AuthRequest';
-import { verifyToken } from '../../shared/utils/tokenManager';
+import { Response, NextFunction } from "express";
+import { AuthRequest } from "../../shared/types/AuthRequest";
+import { verifyToken } from "../../shared/utils/crypto";
 import {
   getAccessToken,
   getRefreshToken,
   setAccessTokenCookie,
   setRefreshTokenCookie,
-} from '../../shared/middleware/cookieAuth';
-import { UnauthorizedError } from '../../shared/errors/AppError';
-import { authService } from './auth.service';
-import { db } from '../../db/client';
-import { shops, sessions } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+} from "../../shared/utils";
+import { UnauthorizedError } from "../../shared/errors/AppError";
+import { authService } from "./auth.service";
+import { db } from "../../db/client";
+import { shops, sessions } from "../../db/schema";
+import { eq } from "drizzle-orm";
 import {
   generateAccessToken,
   generateRefreshToken,
   encrypt,
-} from '../../shared/utils/tokenManager';
-import { v4 as uuidv4 } from 'uuid';
+} from "../../shared/utils/crypto";
+import { v4 as uuidv4 } from "uuid";
 
 export async function requireAuth(
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
     const accessToken = getAccessToken(req);
@@ -63,8 +63,7 @@ export async function requireAuth(
     // ── Fallback: use shop query param to find session ────────
     // This handles the case where cookies aren't sent (iframe issue)
     const shopParam =
-      (req.query.shop as string) ||
-      (req.headers['x-shop-domain'] as string);
+      (req.query.shop as string) || (req.headers["x-shop-domain"] as string);
 
     if (shopParam) {
       // Find shop in DB
@@ -122,7 +121,7 @@ export async function requireAuth(
       }
     }
 
-    throw new UnauthorizedError('No valid session found');
+    throw new UnauthorizedError("No valid session found");
   } catch (error) {
     next(error);
   }

@@ -1,18 +1,30 @@
-import crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
-import { env } from '../../config/env';
-import { encrypt, decrypt, generateAccessToken, generateRefreshToken, verifyToken } from '../../shared/utils/tokenManager';
-import { ShopifyTokenResponse, ShopifyShopResponse, AuthTokens } from './auth.types';
-import { UnauthorizedError, BadRequestError } from '../../shared/errors/AppError';
-import { db } from '../../db/client';
-import { shops, sessions } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import crypto from "crypto";
+import { v4 as uuidv4 } from "uuid";
+import { env } from "../../config/env";
+import {
+  encrypt,
+  decrypt,
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+} from "../../shared/utils/crypto";
+import {
+  ShopifyTokenResponse,
+  ShopifyShopResponse,
+  AuthTokens,
+} from "./auth.types";
+import {
+  UnauthorizedError,
+  BadRequestError,
+} from "../../shared/errors/AppError";
+import { db } from "../../db/client";
+import { shops, sessions } from "../../db/schema";
+import { eq } from "drizzle-orm";
 
 export class AuthService {
-
   // ─── Generate OAuth Install URL ──────────────────────────────────────────
   generateInstallUrl(shop: string): { url: string; nonce: string } {
-    const nonce = crypto.randomBytes(16).toString('hex');
+    const nonce = crypto.randomBytes(16).toString("hex");
     const scopes = env.SHOPIFY_SCOPES;
     const redirectUri = env.REDIRECT_URI;
     const apiKey = env.SHOPIFY_API_KEY;
@@ -36,24 +48,24 @@ export class AuthService {
     const message = Object.keys(rest)
       .sort()
       .map((key) => `${key}=${rest[key]}`)
-      .join('&');
+      .join("&");
 
     const generatedHmac = crypto
-      .createHmac('sha256', env.SHOPIFY_API_SECRET)
+      .createHmac("sha256", env.SHOPIFY_API_SECRET)
       .update(message)
-      .digest('hex');
+      .digest("hex");
 
     return crypto.timingSafeEqual(
       Buffer.from(generatedHmac),
-      Buffer.from(hmac)
+      Buffer.from(hmac),
     );
   }
 
   // ─── Exchange code for access token ──────────────────────────────────────
   async exchangeCodeForToken(shop: string, code: string): Promise<string> {
     const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         client_id: env.SHOPIFY_API_KEY,
         client_secret: env.SHOPIFY_API_SECRET,
@@ -62,7 +74,7 @@ export class AuthService {
     });
 
     if (!response.ok) {
-      throw new BadRequestError('Failed to exchange code for token');
+      throw new BadRequestError("Failed to exchange code for token");
     }
 
     const data = (await response.json()) as ShopifyTokenResponse;
@@ -70,16 +82,19 @@ export class AuthService {
   }
 
   // ─── Get shop info from Shopify API ──────────────────────────────────────
-  async getShopInfo(shop: string, accessToken: string): Promise<ShopifyShopResponse['shop']> {
+  async getShopInfo(
+    shop: string,
+    accessToken: string,
+  ): Promise<ShopifyShopResponse["shop"]> {
     const response = await fetch(
       `https://${shop}/admin/api/2026-04/shop.json`,
       {
-        headers: { 'X-Shopify-Access-Token': accessToken },
-      }
+        headers: { "X-Shopify-Access-Token": accessToken },
+      },
     );
 
     if (!response.ok) {
-      throw new BadRequestError('Failed to fetch shop info');
+      throw new BadRequestError("Failed to fetch shop info");
     }
 
     const data = (await response.json()) as ShopifyShopResponse;
@@ -91,7 +106,7 @@ export class AuthService {
     shopDomain: string,
     accessToken: string,
     scope: string,
-    shopInfo: ShopifyShopResponse['shop']
+    shopInfo: ShopifyShopResponse["shop"],
   ): Promise<AuthTokens> {
     // Check if shop exists
     const existingShop = await db
@@ -136,8 +151,16 @@ export class AuthService {
     const sessionId = uuidv4();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    const jwtAccessToken = generateAccessToken({ shopId, shop: shopDomain, sessionId });
-    const jwtRefreshToken = generateRefreshToken({ shopId, shop: shopDomain, sessionId });
+    const jwtAccessToken = generateAccessToken({
+      shopId,
+      shop: shopDomain,
+      sessionId,
+    });
+    const jwtRefreshToken = generateRefreshToken({
+      shopId,
+      shop: shopDomain,
+      sessionId,
+    });
 
     await db.insert(sessions).values({
       id: sessionId,
@@ -167,11 +190,11 @@ export class AuthService {
       .limit(1);
 
     if (!session.length) {
-      throw new UnauthorizedError('Session not found');
+      throw new UnauthorizedError("Session not found");
     }
 
     if (new Date() > session[0].expiresAt) {
-      throw new UnauthorizedError('Session expired');
+      throw new UnauthorizedError("Session expired");
     }
 
     // Generate new tokens

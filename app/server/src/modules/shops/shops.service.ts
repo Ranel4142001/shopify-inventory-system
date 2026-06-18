@@ -1,5 +1,5 @@
 import { shopsRepository } from "./shops.repository";
-import { decrypt } from "../../shared/utils/tokenManager";
+import { decrypt } from "../../shared/utils/crypto";
 import { NotFoundError } from "../../shared/errors/AppError";
 import type { Shop } from "../../db/schema";
 

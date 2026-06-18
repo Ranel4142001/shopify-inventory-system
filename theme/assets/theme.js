@@ -151,4 +151,86 @@
     }, 3000);
   };
 
+  // ── Search Toggle ───────────────────────────────────────────
+  const searchToggle = document.getElementById('search-toggle');
+  const searchBar = document.getElementById('header-search-bar');
+  const searchInput = document.getElementById('header-search-input');
+
+  if (searchToggle && searchBar) {
+    searchToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      searchBar.classList.toggle('is-active');
+      const isActive = searchBar.classList.contains('is-active');
+      searchToggle.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+      if (isActive && searchInput) {
+        setTimeout(() => searchInput.focus(), 100);
+      }
+    });
+
+    // Prevent closing when clicking inside the search bar
+    searchBar.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Close when clicking anywhere else on the document
+    document.addEventListener('click', () => {
+      if (searchBar.classList.contains('is-active')) {
+        searchBar.classList.remove('is-active');
+        searchToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Close on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchBar.classList.contains('is-active')) {
+        searchBar.classList.remove('is-active');
+        searchToggle.setAttribute('aria-expanded', 'false');
+        searchToggle.focus();
+      }
+    });
+  }
+
+  // ── Auto-resize Select Dropdown ─────────────────────────────
+  const sortSelect = document.getElementById('sort-select');
+
+  function resizeSelect(selectEl) {
+    if (!selectEl) return;
+    const tempSpan = document.createElement('span');
+    tempSpan.style.visibility = 'hidden';
+    tempSpan.style.position = 'absolute';
+    tempSpan.style.whiteSpace = 'nowrap';
+    
+    // Copy select box typography settings to ensure identical text measurement
+    const styles = window.getComputedStyle(selectEl);
+    tempSpan.style.fontFamily = styles.fontFamily;
+    tempSpan.style.fontSize = styles.fontSize;
+    tempSpan.style.fontWeight = styles.fontWeight;
+    tempSpan.style.letterSpacing = styles.letterSpacing;
+    
+    const selectedText = selectEl.options[selectEl.selectedIndex].text;
+    tempSpan.textContent = selectedText;
+    
+    document.body.appendChild(tempSpan);
+    const textWidth = tempSpan.getBoundingClientRect().width;
+    document.body.removeChild(tempSpan);
+    
+    // padding-left + padding-right = 44px + 44px = 88px
+    selectEl.style.width = (textWidth + 88) + 'px';
+  }
+
+  if (sortSelect) {
+    // Run initial sizing
+    resizeSelect(sortSelect);
+    
+    // Resize when user switches sorting method
+    sortSelect.addEventListener('change', () => {
+      resizeSelect(sortSelect);
+    });
+    
+    // Run on window load to ensure custom fonts have loaded and sizes are accurate
+    window.addEventListener('load', () => {
+      resizeSelect(sortSelect);
+    });
+  }
+
 })();
