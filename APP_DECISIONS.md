@@ -1,192 +1,201 @@
-# APP_DECISIONS.md — Tactile Lab: Group Buy Manager
+# Tactile Lab - App Decisions
 
-## Store Concept
+This file explains the idea behind the store, the embedded app, and the main technical choices.
 
-**Tactile Lab** is a high-end mechanical keyboard and desk accessories store
-targeting the enthusiast community. The store sells:
+## 1. Store Concept
 
-- Customizable keyboard bases (aluminum, polycarbonate, brass)
-- Premium switches (linear, tactile, clicky, silent)
-- Designer keycap sets
-- Desk accessories (mousepads, cables, wrist rests)
+The fictional store is called **Tactile Lab**.
 
-### Why This Niche?
-The mechanical keyboard community is one of the most active and passionate
-hardware communities online. They have unique purchasing behaviors —
-specifically "Group Buys" — that no off-the-shelf Shopify solution handles
-well. This creates a genuine, unsolved merchant problem.
+Tactile Lab sells premium mechanical keyboard products:
 
-### Standout Theme Feature: Build Your Board Configurator
-Users select a base keyboard, switch type, and keycap colorway. The product
-image updates dynamically as selections change and the total price recalculates
-in real time using line item properties. This mirrors how enthusiasts actually
-think about keyboards — as modular systems, not fixed products.
+- Custom keyboard kits.
+- Keyboard switches.
+- Keycap sets.
+- Desk accessories.
 
----
+The store is made for keyboard enthusiasts who care about sound, feel, design, and custom builds.
 
-## App Idea: Group Buy & Pre-Order Manager
+## 2. Why This Store Idea?
 
-### The Problem
-Mechanical keyboard Group Buys work like this:
-1. Designer announces a keyboard
-2. Community "buys in" during a funding window (weeks/months)
-3. Manufacturer produces the run (months/years)
-4. Units ship to buyers
+Mechanical keyboard stores often use **group buys**.
 
-Shopify has no native concept for this. Merchants are left managing:
-- Which GBs are in production vs shipping vs overdue
-- How many customers are waiting for each GB
-- Supplier communications and delay tracking
-- Customer notification decisions (when is a delay bad enough to email?)
+A group buy is a pre-order campaign where customers pay before the product is manufactured.
 
-The Group Buy Manager solves all of this with a single dashboard that
-ranks every active group buy by fulfillment urgency — so the merchant
-always knows what to work on first.
+This creates real merchant problems:
 
-### Key Features
-- **Urgency Scoring** — 0–100 score computed from 3 weighted factors
-- **Ranked Dashboard** — highest urgency always at the top
-- **Auto Alerts** — system detects overdue GBs and delay patterns
-- **Activity Log** — full audit trail of every status change
-- **Manufacturing Pipeline** — track stages from tooling to shipping
+- Some products are still funding.
+- Some are in production.
+- Some are delayed.
+- Some have many customers waiting.
+- Merchants need to decide when to contact suppliers or customers.
 
----
+That makes this store idea a good fit for both a creative storefront and a useful admin app.
 
-## Key Architecture Decisions
+## 3. Theme Standout Feature
 
-### 1. Module-based folder structure (Routes → Controller → Service → Repository)
-Each feature (auth, rules, scoring, activity, dashboard) is fully
-self-contained. Controllers know Express. Services know business logic.
-Repositories know Drizzle. Nothing else crosses these boundaries.
+The main storefront feature is the **Build Your Board Configurator**.
 
-**Tradeoff:** More files per feature vs monolithic files.
-**Why:** Makes each layer independently testable and replaceable.
-If we swap MySQL for PostgreSQL, only repository files change.
+On products tagged `configurator`, shoppers can choose:
 
-### 2. Scoring as a separate module
-The urgency scoring algorithm lives in its own module (`modules/scoring/`)
-rather than inside the rules module.
+1. Keyboard base.
+2. Switch type.
+3. Keycap style.
 
-**Why:** Scoring is a distinct business concern. It reads from rules,
-writes to scores, and is triggered by multiple other modules. Keeping it
-separate means the algorithm can evolve independently without touching
-the CRUD logic for group buys.
+The page updates the price and saves the choices in the cart as line item properties.
 
-### 3. Access + Refresh tokens in httpOnly cookies
-Tokens are never exposed to JavaScript. The access token lives 15 minutes,
-the refresh token lives 7 days. On every authenticated request, if the
-access token is expired, the middleware silently refreshes it using the
-refresh token — the user never sees a login screen.
+There is also a product recommender quiz that asks about typing style and suggests products.
 
-**Tradeoff:** Slightly more complex middleware vs simpler localStorage approach.
-**Why:** httpOnly cookies are immune to XSS attacks. For a Shopify app
-that handles merchant data, this is the correct security posture.
+## 4. Embedded App Idea
 
-### 4. Shopify access token encrypted at rest
-The Shopify API access token stored in the `shops` table is AES-256
-encrypted using the `ENCRYPTION_KEY` env variable. Even if the database
-is compromised, tokens are unreadable without the key.
+The embedded app is called **Group Buy Manager**.
 
-### 5. Rate limiting keyed by shop domain (not IP)
-Standard IP-based rate limiting would penalize all merchants sharing the
-same corporate NAT/proxy. Keying by shop domain means each merchant gets
-their own independent rate limit bucket.
+It helps the merchant manage group buys from inside Shopify Admin.
 
-### 6. Activity logging as a side effect
-The activity log is not a primary feature — it's a side effect. Every
-service that mutates data calls `activityService.log()` as part of its
-operation. This means the log is always accurate and requires no extra
-developer discipline to maintain.
+The app answers this question:
 
-### 7. Schema naming follows the folder structure
-Tables map directly to modules:
-- `rules` → `modules/rules/`
-- `scores` → `modules/scoring/`
-- `products` → manufacturing stages (pipeline tracking)
-- `activity_logs` → `modules/activity/`
+```text
+Which group buy needs attention first?
+```
 
-This makes it immediately obvious which module owns which table.
+Main features:
 
----
+- Dashboard with store-level group buy stats.
+- Create and update group buys.
+- Track production stage.
+- Track customer count and funding.
+- Track delay days.
+- Rank group buys by urgency.
+- Save score history.
+- Save activity logs.
 
-## Urgency Scoring Algorithm
+## 5. Main Architecture Choice
 
-The urgency score (0–100) is computed from three weighted components:
+The backend uses a module-based structure.
 
-| Component | Weight | Rationale |
-|---|---|---|
-| Days until ship date | 45% | Deadline proximity is the #1 driver of urgency |
-| Delay penalty | 30% | Any supplier delay requires immediate merchant attention |
-| Customer stake | 25% | More customers waiting = higher business impact |
+Each feature has its own folder:
 
-### Score → Level mapping
-| Score | Level | Action |
-|---|---|---|
-| 75–100 | 🚨 Critical | Immediate action required |
-| 50–74 | ⚠️ High | Review today |
-| 25–49 | 🔵 Medium | Monitor this week |
-| 0–24 | ✅ Low | On track |
+- `auth`
+- `shops`
+- `rules`
+- `scoring`
+- `activity`
+- `dashboard`
 
----
+Each module can have:
 
-## Database Schema Decisions
+- Routes.
+- Controller.
+- Service.
+- Repository.
 
-### Why MySQL (not PostgreSQL)?
-The tech stack specified MySQL. MySQL 8+ supports JSON columns, window
-functions, and CTEs — everything needed for this app.
+Simple explanation:
 
-### Why UUIDs as primary keys (not auto-increment)?
-UUIDs are safe to expose in URLs without leaking sequence information.
-`/api/rules/1` tells competitors how many group buys you have.
-`/api/rules/a3f2b1c4-...` does not.
+| Layer | Job |
+| --- | --- |
+| Route | Defines the API URL. |
+| Controller | Reads request input and returns response output. |
+| Service | Holds business logic. |
+| Repository | Talks to the database with Drizzle. |
 
-### Why store Shopify access token in the `shops` table AND sessions table?
-- `shops.accessToken` = the Shopify OAuth token (for API calls to Shopify)
-- `sessions.accessToken` = the JWT for our own API (for calls to our backend)
+This keeps the code easier to understand and easier to change.
 
-These are different tokens for different purposes and must not be confused.
+## 6. Database Decisions
 
----
+The app uses MySQL with Drizzle ORM.
 
-## Tradeoffs
+Main tables:
 
-| Decision | Benefit | Cost |
-|---|---|---|
-| TypeScript everywhere | Type safety, better DX | More boilerplate |
-| Zod validation | Runtime type safety | Extra dependency |
-| Module-per-feature | Clean separation | More files |
-| httpOnly cookies | XSS protection | CSRF consideration needed |
-| UUID PKs | Safe to expose | Slightly larger index size |
-| In-memory nonce store | Simple | Lost on server restart (use Redis in prod) |
+| Table | Purpose |
+| --- | --- |
+| `shops` | Stores installed Shopify shops. |
+| `sessions` | Stores app session tokens. |
+| `rules` | Stores group buys. |
+| `products` | Stores production stages for group buys. |
+| `scores` | Stores urgency score history. |
+| `activity_logs` | Stores activity history. |
 
----
+Important naming note:
 
-## What I'd Improve With More Time
+The `rules` table stores group buys. The `products` table stores production stages. These names are historical, but the app documents what they mean.
 
-### High Priority
-1. **Redis for nonce/session store** — replace in-memory Map with Redis
-   so OAuth state survives server restarts and horizontal scaling
-2. **Shopify Webhook integration** — listen to `orders/paid` webhook to
-   auto-increment `customerCount` when an order is placed for a GB product
-3. **Email notifications** — when urgency score crosses critical threshold,
-   auto-send merchant a summary email via SendGrid/Resend
-4. **Supplier update thread** — structured supplier communication log
-   with delay day tracking per update, not just a notes field
+## 7. OAuth And Security Decisions
 
-### Medium Priority
-5. **Real Shopify product linking** — connect a group buy to an actual
-   Shopify product via `shopifyProductId` and pull live order count
-6. **CSV export** — export group buy list + urgency scores as CSV for
-   external reporting
-7. **Role-based access** — staff accounts with read-only vs full access
-8. **Pagination UI** — the frontend currently loads all records;
-   add proper cursor-based pagination for large catalogs
+The app uses Shopify OAuth.
 
-### Nice to Have
-9. **Dark mode** — the theme is dark but the admin app uses Polaris light;
-   a dark variant would match the brand better
-10. **Mobile responsive admin** — currently optimized for desktop;
-    Shopify admin is often accessed on mobile
-11. **Test coverage** — unit tests for the scoring algorithm and
-    integration tests for the OAuth flow
-12. **Docker Compose** — containerize the full stack for one-command setup
+After install:
+
+1. Shopify gives the backend an access token.
+2. The backend saves the Shopify token in the database.
+3. The backend creates app session cookies.
+4. The merchant uses the embedded app through those cookies.
+
+Security choices:
+
+- Shopify access tokens are encrypted before saving to MySQL.
+- App tokens are stored in `httpOnly` cookies.
+- Cookies are `secure` and `sameSite=none` for Shopify iframe support.
+- The app uses access and refresh tokens.
+
+This is safer than storing tokens in browser local storage.
+
+## 8. Urgency Scoring Decision
+
+The app includes a logic-based feature: **urgency scoring**.
+
+Each group buy gets a score from 0 to 100.
+
+The score uses:
+
+| Factor | Weight | Why |
+| --- | ---: | --- |
+| Days until ship date | 45% | Close or overdue ship dates need attention. |
+| Delay days | 30% | Supplier delays increase risk. |
+| Customer count | 25% | More waiting customers means higher impact. |
+
+Score levels:
+
+| Score | Level | Meaning |
+| ---: | --- | --- |
+| 75 to 100 | Critical | Act now. |
+| 50 to 74 | High | Review today. |
+| 25 to 49 | Medium | Watch closely. |
+| 0 to 24 | Low | On track. |
+
+This makes the dashboard useful, not just a list of records.
+
+## 9. Tradeoffs
+
+| Choice | Benefit | Tradeoff |
+| --- | --- | --- |
+| TypeScript | Safer code and better editor help. | More setup and types. |
+| Module-based backend | Easier to read and maintain. | More files. |
+| Drizzle ORM | Clear schema and SQL-friendly queries. | Requires migration setup. |
+| MySQL | Matches the required stack. | Less flexible than PostgreSQL for some advanced features. |
+| `httpOnly` cookies | Better security. | Requires HTTPS and iframe-friendly cookie settings. |
+| In-memory OAuth nonce store | Simple for take-home project. | Use Redis in production. |
+| Manual activity logging | Easy to understand. | More automation would be better later. |
+
+## 10. What I Would Improve With More Time
+
+High priority:
+
+1. Add real automated tests for scoring, auth, and rules.
+2. Add Shopify webhooks for orders and app uninstall.
+3. Auto-update customer counts from real Shopify orders.
+4. Add email alerts when a group buy becomes critical.
+5. Replace the in-memory OAuth nonce store with Redis.
+
+Medium priority:
+
+1. Improve pagination and filtering for large stores.
+2. Add CSV export for group buy reports.
+3. Add staff permissions.
+4. Add a structured supplier update thread.
+5. Add Docker Compose for easier setup.
+
+Nice to have:
+
+1. Better mobile admin layout.
+2. Dark mode for the admin app.
+3. More storefront animations.
+4. More polished sample product data.

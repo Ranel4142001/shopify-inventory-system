@@ -4,3 +4,4 @@ export * from './rules.schema';
 export * from './products.schema';
 export * from './scores.schema';
 export * from './activityLogs.schema';
+export * from './orders.schema';

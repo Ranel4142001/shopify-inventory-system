@@ -1,17 +1,19 @@
-import { v4 as uuidv4 } from 'uuid';
-import { rulesRepository } from './rules.repository';
-import { NotFoundError, ForbiddenError } from '../../shared/errors/AppError';
-import { buildPaginatedResult, PaginationParams } from '../../shared/utils/pagination';
-import type { CreateRuleInput, UpdateRuleInput } from './rules.validation';
-import type { Rule } from '../../db/schema';
+import { v4 as uuidv4 } from "uuid";
+import { rulesRepository } from "./rules.repository";
+import { NotFoundError, ForbiddenError } from "../../shared/errors/AppError";
+import {
+  buildPaginatedResult,
+  PaginationParams,
+} from "../../shared/utils/pagination";
+import type { CreateRuleInput, UpdateRuleInput } from "./rules.validation";
+import type { Rule } from "../../db/schema";
 
 export class RulesService {
-
   async getAllRules(shopId: string, pagination: PaginationParams) {
     const { data, total } = await rulesRepository.findByShopId(
       shopId,
       pagination.page,
-      pagination.limit
+      pagination.limit,
     );
     return buildPaginatedResult(data, total, pagination);
   }
@@ -29,10 +31,7 @@ export class RulesService {
     return rule;
   }
 
-  async createRule(
-    shopId: string,
-    input: CreateRuleInput
-  ): Promise<Rule> {
+  async createRule(shopId: string, input: CreateRuleInput): Promise<Rule> {
     const id = uuidv4();
     return rulesRepository.create({
       id,
@@ -55,7 +54,7 @@ export class RulesService {
   async updateRule(
     shopId: string,
     ruleId: string,
-    input: UpdateRuleInput
+    input: UpdateRuleInput,
   ): Promise<Rule> {
     // Verify ownership
     await this.getRuleById(shopId, ruleId);

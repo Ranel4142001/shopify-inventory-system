@@ -23,15 +23,20 @@ export class ScoringRepository {
       .orderBy(desc(scores.createdAt));
   }
 
+  async getLatestScoresForShop(shopId: string) {
+    return await db
+      .select({ score: scores })
+      .from(scores)
+      .innerJoin(rules, eq(scores.ruleId, rules.id))
+      .where(eq(rules.shopId, shopId));
+  }
+
   async create(data: NewScore): Promise<Score> {
     await db.insert(scores).values(data);
     return (await this.findLatestByRuleId(data.ruleId))!;
   }
 
-  async updateRuleUrgencyScore(
-    ruleId: string,
-    urgencyScore: number
-  ): Promise<void> {
+  async updateRuleUrgencyScore(ruleId: string, urgencyScore: number): Promise<void> {
     await db
       .update(rules)
       .set({ urgencyScore, updatedAt: new Date() })
@@ -46,4 +51,5 @@ export class ScoringRepository {
   }
 }
 
+// THIS IS THE LINE THAT FIXES YOUR ERROR
 export const scoringRepository = new ScoringRepository();

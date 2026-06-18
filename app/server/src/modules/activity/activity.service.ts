@@ -73,3 +73,21 @@ export class ActivityService {
 }
 
 export const activityService = new ActivityService();
+
+/**
+ * Helper: Standalone export to fix "module has no exported member" errors
+ * Use this in your other services like ScoringService.
+ */
+export const logActivity = async (
+  shopId: string,
+  actionType: ActionType,
+  description: string,
+  groupBuyId?: string
+) => {
+  return activityService.log({
+    shopId,
+    actionType,
+    description,
+    groupBuyId,
+  });
+};

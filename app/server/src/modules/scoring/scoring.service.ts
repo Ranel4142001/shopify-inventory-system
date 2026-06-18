@@ -3,6 +3,7 @@ import { scoringRepository } from './scoring.repository';
 import { rulesRepository } from '../rules/rules.repository';
 import { NotFoundError } from '../../shared/errors/AppError';
 import type { Rule } from '../../db/schema';
+import { logActivity } from '../activity/activity.service';
 
 // ─── Scoring Weights ─────────────────────────────────────────────────────────
 // These weights define what matters most for urgency
@@ -180,28 +181,33 @@ export class ScoringService {
       createdAt: new Date(),
     });
 
+      await logActivity(
+  shopId, 
+  'score_recalculated', 
+  `Urgency score updated to ${result.urgencyScore} for rule ${ruleId}`
+);
+     
     return result;
   }
 
-  // ─── Score ALL group buys for a shop and return ranked list ──────────────
+ // ─── Score ALL group buys for a shop and return ranked list ──────────────
   async scoreAllRules(shopId: string): Promise<UrgencyResult[]> {
-    const allRules = await scoringRepository.getAllRulesForShop(shopId);
+    // 1. Explicitly type allRules as Rule[]
+    const allRules: Rule[] = await scoringRepository.getAllRulesForShop(shopId);
 
     if (!allRules.length) return [];
 
-    // Calculate scores for all group buys
-    const results = await Promise.all(
-      allRules.map(async (rule) => {
-        const latestScore = await scoringRepository.findLatestByRuleId(
-          rule.id
-        );
+    // 2. Explicitly type the results as UrgencyResult[]
+    const results: UrgencyResult[] = await Promise.all(
+      allRules.map(async (rule: Rule) => {
+        const latestScore = await scoringRepository.findLatestByRuleId(rule.id);
         const delayDays = latestScore?.delayDays ?? 0;
         return this.calculateUrgencyScore(rule, delayDays);
       })
     );
 
-    // Sort by urgency score descending — highest urgency first
-    return results.sort((a, b) => b.urgencyScore - a.urgencyScore);
+    // 3. Explicitly type 'a' and 'b' to resolve the implicit any error
+    return results.sort((a: UrgencyResult, b: UrgencyResult) => b.urgencyScore - a.urgencyScore);
   }
 
   // ─── Get score history for a group buy ───────────────────────────────────
