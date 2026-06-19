@@ -1,7 +1,8 @@
 import { eq, desc } from 'drizzle-orm';
 import { db } from '../../db/client';
 import { scores, rules } from '../../db/schema';
-import type { Score, NewScore } from '../../db/schema';
+import type { Score, NewScore, DbScore, DbNewScore } from '../../db/schema';
+import { mapDbScoreToScore, mapScoreToDbNewScore, mapDbRuleToRule } from '../../db/schema/mappers';
 
 export class ScoringRepository {
 
@@ -9,30 +10,36 @@ export class ScoringRepository {
     const result = await db
       .select()
       .from(scores)
-      .where(eq(scores.ruleId, ruleId))
+      .where(eq(scores.rulePublicId, ruleId))
       .orderBy(desc(scores.createdAt))
       .limit(1);
-    return result[0] ?? null;
+    return result[0] ? mapDbScoreToScore(result[0]) : null;
   }
 
   async findAllByRuleId(ruleId: string): Promise<Score[]> {
-    return db
+    const result = await db
       .select()
       .from(scores)
-      .where(eq(scores.ruleId, ruleId))
+      .where(eq(scores.rulePublicId, ruleId))
       .orderBy(desc(scores.createdAt));
+    return result.map(mapDbScoreToScore);
   }
 
   async getLatestScoresForShop(shopId: string) {
-    return await db
+    const result = await db
       .select({ score: scores })
       .from(scores)
-      .innerJoin(rules, eq(scores.ruleId, rules.id))
-      .where(eq(rules.shopId, shopId));
+      .innerJoin(rules, eq(scores.rulePublicId, rules.publicId))
+      .where(eq(rules.shopPublicId, shopId));
+    
+    return result.map(r => ({
+      score: mapDbScoreToScore(r.score)
+    }));
   }
 
   async create(data: NewScore): Promise<Score> {
-    await db.insert(scores).values(data);
+    const dbData = mapScoreToDbNewScore(data) as DbNewScore;
+    await db.insert(scores).values(dbData);
     return (await this.findLatestByRuleId(data.ruleId))!;
   }
 
@@ -40,14 +47,15 @@ export class ScoringRepository {
     await db
       .update(rules)
       .set({ urgencyScore, updatedAt: new Date() })
-      .where(eq(rules.id, ruleId));
+      .where(eq(rules.publicId, ruleId));
   }
 
   async getAllRulesForShop(shopId: string) {
-    return db
+    const result = await db
       .select()
       .from(rules)
-      .where(eq(rules.shopId, shopId));
+      .where(eq(rules.shopPublicId, shopId));
+    return result.map(mapDbRuleToRule);
   }
 }
 

@@ -2,70 +2,99 @@ import {
   mysqlTable,
   varchar,
   timestamp,
-  smallint,
-  mysqlEnum,
   date,
+  smallint,
   index,
   uniqueIndex,
-} from 'drizzle-orm/mysql-core';
-import { sql } from 'drizzle-orm';
-import { rules } from './rules.schema';
+  mysqlEnum,
+} from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
+import { rules } from "./rules.schema";
+import { binary16 } from "./customTypes";
 
-// ─── Enum values extracted as a const for reuse in app code ──────────────────
+/**
+ * STAGE_STATUSES
+ * - Reusable enum for product stage state
+ */
 export const STAGE_STATUSES = [
-  'pending',
-  'in_progress',
-  'completed',
-  'delayed',
+  "pending",
+  "in_progress",
+  "completed",
+  "delayed",
 ] as const;
 
 export type StageStatus = (typeof STAGE_STATUSES)[number];
 
-// ─── Table definition ─────────────────────────────────────────────────────────
+/**
+ * products
+ * - Primary id: packed 16-byte UUID (publicId)
+ * - FK: rulePublicId -> rules.public_id
+ * - orderIndex uses smallint to save space
+ */
 export const products = mysqlTable(
-  'products',
+  "products",
   {
-    id: varchar('id', { length: 36 }).primaryKey(),
+    // Packed UUID primary id
+    publicId: binary16("public_id").primaryKey(),
 
-    ruleId: varchar('rule_id', { length: 36 })
+    // FK to rules.public_id; deleting a rule removes its products
+    rulePublicId: binary16("rule_public_id")
       .notNull()
-      .references(() => rules.id, { onDelete: 'cascade' }),
+      .references(() => rules.publicId, { onDelete: "cascade" }),
 
-    stageName: varchar('stage_name', { length: 100 }).notNull(),
+    // Stage name (e.g., "Design", "Manufacturing")
+    stageName: varchar("stage_name", { length: 100 }).notNull(),
 
-    // smallint (0–32767) is sufficient for ordering and saves 2 bytes vs int
-    orderIndex: smallint('order_index').notNull(),
+    // Order within the rule (smallint is sufficient)
+    orderIndex: smallint("order_index").notNull(),
 
-    // date-only columns — no time component needed for expected/actual delivery dates
-    expectedDate: date('expected_date', { mode: 'date' }).notNull(),
-    actualDate: date('actual_date', { mode: 'date' }),
+    // Expected and actual ship dates (date-only)
+    expectedDate: date("expected_date", { mode: "date" }).notNull(),
+    actualDate: date("actual_date", { mode: "date" }),
 
-    status: mysqlEnum('status', STAGE_STATUSES).notNull().default('pending'),
+    // Stage status enum
+    status: mysqlEnum("status", STAGE_STATUSES).notNull().default("pending"),
 
-    createdAt: timestamp('created_at', { mode: 'date' })
+    // Timestamps
+    createdAt: timestamp("created_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
-    // ON UPDATE CURRENT_TIMESTAMP is the correct MySQL idiom for auto-updating timestamps
-    updatedAt: timestamp('updated_at', { mode: 'date' })
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull()
       .$onUpdate(() => new Date()),
   },
   (table) => ({
-    // Most queries will filter by ruleId — this is the primary access pattern
-    ruleIdIdx: index('idx_products_rule_id').on(table.ruleId),
+    // Fast lookup by rule
+    ruleIdIdx: index("idx_products_rule_public_id").on(table.rulePublicId),
 
-    // Enforce that stage order within a rule is unique (no two stages share position 1, 2, etc.)
-    ruleOrderUniqueIdx: uniqueIndex('idx_products_rule_order').on(
-      table.ruleId,
+    // Ensure unique order positions per rule
+    ruleOrderUniqueIdx: uniqueIndex("ux_products_rule_order").on(
+      table.rulePublicId,
       table.orderIndex,
     ),
 
-    // Querying "all delayed/in-progress stages across rules" is a common dashboard pattern
-    statusIdx: index('idx_products_status').on(table.status),
+    // Query by status across rules
+    statusIdx: index("idx_products_status").on(table.status),
   }),
 );
 
-export type Product = typeof products.$inferSelect;
-export type NewProduct = typeof products.$inferInsert;
+export type DbProduct = typeof products.$inferSelect;
+export type DbNewProduct = typeof products.$inferInsert;
+
+export type Product = {
+  id: string;
+  ruleId: string;
+  stageName: string;
+  orderIndex: number;
+  expectedDate: Date;
+  actualDate: Date | null;
+  status: 'pending' | 'in_progress' | 'completed' | 'delayed';
+  createdAt: Date;
+  updatedAt: Date;
+};
+export type NewProduct = Omit<Product, 'createdAt' | 'updatedAt'> & {
+  createdAt?: Date;
+  updatedAt?: Date;
+};

@@ -18,6 +18,7 @@ import {
   encrypt,
 } from "../../shared/utils/crypto";
 import { v4 as uuidv4 } from "uuid";
+import { mapDbShopToShop, mapDbSessionToSession } from "../../db/schema/mappers";
 
 export async function requireAuth(
   req: AuthRequest,
@@ -74,17 +75,18 @@ export async function requireAuth(
         .limit(1);
 
       if (shopRecord.length > 0) {
-        const shop = shopRecord[0];
+        const shop = mapDbShopToShop(shopRecord[0]);
 
         // Find latest session for this shop
         const sessionRecord = await db
           .select()
           .from(sessions)
-          .where(eq(sessions.shopId, shop.id))
+          .where(eq(sessions.shopPublicId, shop.id))
           .limit(1);
 
         if (sessionRecord.length > 0) {
-          const sessionId = sessionRecord[0].id;
+          const session = mapDbSessionToSession(sessionRecord[0]);
+          const sessionId = session.id;
 
           // Generate new tokens
           const newAccessToken = generateAccessToken({
@@ -110,7 +112,7 @@ export async function requireAuth(
               refreshToken: encrypt(newRefreshToken),
               updatedAt: new Date(),
             })
-            .where(eq(sessions.id, sessionId));
+            .where(eq(sessions.publicId, sessionId));
 
           req.shopId = shop.id;
           req.shop = shop.domain;

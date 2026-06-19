@@ -3,6 +3,7 @@ import { shops, rules } from "./schema";
 import { eq } from "drizzle-orm";
 import { decrypt } from "../shared/utils/crypto";
 import { shopifyRestRequest } from "../shared/utils/shopifyClient";
+import { mapDbShopToShop } from "./schema/mappers";
 
 interface ShopifyProduct {
   id: number;
@@ -206,7 +207,11 @@ async function syncProducts() {
     process.exit(1);
   }
 
-  const shop = shopList[0];
+  const shop = mapDbShopToShop(shopList[0]);
+  if (!shop.accessToken) {
+    console.error("❌ Shop has no access token.");
+    process.exit(1);
+  }
   const accessToken = decrypt(shop.accessToken);
   console.log(`✅ Found shop: ${shop.domain}`);
 

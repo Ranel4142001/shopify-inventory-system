@@ -20,6 +20,12 @@ import {
 import { db } from "../../db/client";
 import { shops, sessions } from "../../db/schema";
 import { eq } from "drizzle-orm";
+import {
+  mapDbShopToShop,
+  mapShopToDbNewShop,
+  mapDbSessionToSession,
+  mapSessionToDbNewSession,
+} from "../../db/schema/mappers";
 
 export class AuthService {
   // ─── Generate OAuth Install URL ──────────────────────────────────────────
@@ -119,22 +125,23 @@ export class AuthService {
 
     if (existingShop.length > 0) {
       // Update existing shop
-      shopId = existingShop[0].id;
+      shopId = existingShop[0].publicId;
+      const dbUpdateData = mapShopToDbNewShop({
+        accessToken: encrypt(accessToken),
+        scope,
+        email: shopInfo.email,
+        shopName: shopInfo.name,
+        isActive: true,
+        updatedAt: new Date(),
+      });
       await db
         .update(shops)
-        .set({
-          accessToken: encrypt(accessToken),
-          scope,
-          email: shopInfo.email,
-          shopName: shopInfo.name,
-          isActive: true,
-          updatedAt: new Date(),
-        })
-        .where(eq(shops.id, shopId));
+        .set(dbUpdateData)
+        .where(eq(shops.publicId, shopId));
     } else {
       // Create new shop
       shopId = uuidv4();
-      await db.insert(shops).values({
+      const dbInsertData = mapShopToDbNewShop({
         id: shopId,
         domain: shopDomain,
         accessToken: encrypt(accessToken),
@@ -145,6 +152,7 @@ export class AuthService {
         installedAt: new Date(),
         updatedAt: new Date(),
       });
+      await db.insert(shops).values(dbInsertData as any);
     }
 
     // Create session
@@ -162,7 +170,7 @@ export class AuthService {
       sessionId,
     });
 
-    await db.insert(sessions).values({
+    const dbSessionInsert = mapSessionToDbNewSession({
       id: sessionId,
       shopId,
       accessToken: encrypt(jwtAccessToken),
@@ -171,6 +179,7 @@ export class AuthService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    await db.insert(sessions).values(dbSessionInsert as any);
 
     return {
       accessToken: jwtAccessToken,
@@ -186,14 +195,16 @@ export class AuthService {
     const session = await db
       .select()
       .from(sessions)
-      .where(eq(sessions.id, payload.sessionId))
+      .where(eq(sessions.publicId, payload.sessionId))
       .limit(1);
 
     if (!session.length) {
       throw new UnauthorizedError("Session not found");
     }
 
-    if (new Date() > session[0].expiresAt) {
+    const cleanSession = mapDbSessionToSession(session[0]);
+
+    if (new Date() > cleanSession.expiresAt) {
       throw new UnauthorizedError("Session expired");
     }
 
@@ -218,7 +229,7 @@ export class AuthService {
         refreshToken: encrypt(newRefreshToken),
         updatedAt: new Date(),
       })
-      .where(eq(sessions.id, payload.sessionId));
+      .where(eq(sessions.publicId, payload.sessionId));
 
     return {
       accessToken: newAccessToken,

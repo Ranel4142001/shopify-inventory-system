@@ -1,55 +1,70 @@
+// src/db/schemas/sessions.schema.ts
 import {
   mysqlTable,
   varchar,
   timestamp,
-  index,
   uniqueIndex,
+  index,
 } from 'drizzle-orm/mysql-core';
 import { sql } from 'drizzle-orm';
 import { shops } from './shops.schema';
+import { binary16 } from './customTypes';
 
+/**
+ * sessions
+ * - Primary id: packed 16-byte UUID (publicId)
+ * - FK: shopPublicId -> shops.public_id
+ */
 export const sessions = mysqlTable(
   'sessions',
   {
-    id: varchar('id', { length: 36 }).primaryKey(),
+    // Packed UUID primary id
+    publicId: binary16('public_id').primaryKey(),
 
-    // Each session belongs to one shop; deleting the shop wipes its sessions
-    shopId: varchar('shop_id', { length: 36 })
+    // FK to shops.public_id; deleting a shop removes its sessions
+    shopPublicId: binary16('shop_public_id')
       .notNull()
-      .references(() => shops.id, { onDelete: 'cascade' }),
+      .references(() => shops.publicId, { onDelete: 'cascade' }),
 
-    // Stored encrypted at rest — varchar(512) comfortably holds
-    // any encrypted OAuth token without the overhead of TEXT (which
-    // always goes off-page in InnoDB and requires an extra disk read)
+    // Encrypted access token (kept inline for performance)
     accessToken: varchar('access_token', { length: 512 }).notNull(),
 
-    // Same reasoning as accessToken
+    // Encrypted refresh token
     refreshToken: varchar('refresh_token', { length: 512 }).notNull(),
 
-    // When the access token expires and a refresh is needed
+    // Token expiry timestamp
     expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
 
-    // When this session row was first created
+    // Creation time
     createdAt: timestamp('created_at', { mode: 'date' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
-    // Automatically updated whenever the row is changed (e.g. token refresh)
+    // Last update time (auto-updated)
     updatedAt: timestamp('updated_at', { mode: 'date' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull()
       .$onUpdate(() => new Date()),
   },
   (table) => ({
-    // One active session per shop — enforces this at the DB level.
-    // If a shop re-installs or re-authenticates, upsert into this unique slot
-    // rather than accumulating stale session rows.
-    shopUniqueIdx: uniqueIndex('idx_sessions_shop_id').on(table.shopId),
+    // One active session per shop
+    shopUniqueIdx: uniqueIndex('idx_sessions_shop_public_id').on(table.shopPublicId),
 
-    // Fast lookup when validating a token on every incoming request
+    // Fast lookup for expired sessions
     expiresAtIdx: index('idx_sessions_expires_at').on(table.expiresAt),
   }),
 );
 
-export type Session = typeof sessions.$inferSelect;
-export type NewSession = typeof sessions.$inferInsert;
+export type DbSession = typeof sessions.$inferSelect;
+export type DbNewSession = typeof sessions.$inferInsert;
+
+export type Session = {
+  id: string;
+  shopId: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+export type NewSession = Session;

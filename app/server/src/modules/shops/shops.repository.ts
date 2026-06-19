@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/client';
 import { shops } from '../../db/schema';
-import type { Shop, NewShop } from '../../db/schema';
+import type { Shop, NewShop, DbShop, DbNewShop } from '../../db/schema';
+import { mapDbShopToShop, mapShopToDbNewShop } from '../../db/schema/mappers';
 
 export class ShopsRepository {
 
@@ -9,9 +10,9 @@ export class ShopsRepository {
     const result = await db
       .select()
       .from(shops)
-      .where(eq(shops.id, id))
+      .where(eq(shops.publicId, id))
       .limit(1);
-    return result[0] ?? null;
+    return result[0] ? mapDbShopToShop(result[0]) : null;
   }
 
   async findByDomain(domain: string): Promise<Shop | null> {
@@ -20,11 +21,12 @@ export class ShopsRepository {
       .from(shops)
       .where(eq(shops.domain, domain))
       .limit(1);
-    return result[0] ?? null;
+    return result[0] ? mapDbShopToShop(result[0]) : null;
   }
 
   async create(data: NewShop): Promise<Shop> {
-    await db.insert(shops).values(data);
+    const dbData = mapShopToDbNewShop(data) as DbNewShop;
+    await db.insert(shops).values(dbData);
     const created = await this.findById(data.id);
     return created!;
   }
@@ -33,10 +35,11 @@ export class ShopsRepository {
     id: string,
     data: Partial<NewShop>
   ): Promise<Shop | null> {
+    const dbData = mapShopToDbNewShop(data);
     await db
       .update(shops)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(shops.id, id));
+      .set({ ...dbData, updatedAt: new Date() })
+      .where(eq(shops.publicId, id));
     return this.findById(id);
   }
 
@@ -44,11 +47,12 @@ export class ShopsRepository {
     await db
       .update(shops)
       .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(shops.id, id));
+      .where(eq(shops.publicId, id));
   }
 
   async findAll(): Promise<Shop[]> {
-    return db.select().from(shops);
+    const result = await db.select().from(shops);
+    return result.map(mapDbShopToShop);
   }
 }
 
