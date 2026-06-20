@@ -1,4 +1,3 @@
-// app/server/src/shared/middleware/cookieAuth.ts
 import { Request, Response, NextFunction } from 'express';
 import { getAccessToken, verifyToken } from '../utils'; 
 import { UnauthorizedError } from '../errors/AppError';

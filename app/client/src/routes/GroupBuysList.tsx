@@ -50,35 +50,27 @@ function StatusBadge({ status }: { status: string }) {
 export function GroupBuysList() {
   const navigate = useNavigate();
 
-  const [pageItems, setPageItems] = useState<GroupBuy[]>([]);
+  const [allRules, setAllRules] = useState<GroupBuy[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  function loadPage(targetPage: number) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateSortOrder, setDateSortOrder] = useState<'desc' | 'asc'>('desc');
+
+  function loadData() {
     setLoading(true);
     setError(null);
 
     apiClient
-      .get<GroupBuy[]>(`/rules?page=${targetPage}&limit=${PAGE_SIZE}`)
+      .get<GroupBuy[]>(`/rules?page=1&limit=100`)
       .then(res => {
         if (!res.success) {
           setError(`Failed to load group buys: ${res.error?.message || 'Unknown error.'}`);
           return;
         }
-        setPageItems(res.data || []);
-        if (res.pagination) {
-          setPage(res.pagination.page);
-          setTotalPages(res.pagination.totalPages);
-          setTotalCount(res.pagination.total);
-        } else {
-          // Backend didn't return pagination info — treat as a single page
-          setPage(1);
-          setTotalPages(1);
-          setTotalCount(res.data?.length || 0);
-        }
+        setAllRules(res.data || []);
       })
       .catch((err: any) => {
         setError(`Failed to load group buys: ${err?.message || 'Server did not respond.'}`);
@@ -88,12 +80,45 @@ export function GroupBuysList() {
 
   // Initial load
   useEffect(() => {
-    loadPage(1);
+    loadData();
   }, []);
 
+  const filteredAndSortedRules = React.useMemo(() => {
+    let result = [...allRules];
+
+    // 1. Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(r => r.productTitle.toLowerCase().includes(q));
+    }
+
+    // 2. Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(r => r.status === statusFilter);
+    }
+
+    // 3. Date sorting (Latest to Oldest by default)
+    result.sort((a, b) => {
+      const dateA = a.targetShipDate ? new Date(a.targetShipDate).getTime() : 0;
+      const dateB = b.targetShipDate ? new Date(b.targetShipDate).getTime() : 0;
+      return dateSortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [allRules, searchQuery, statusFilter, dateSortOrder]);
+
+  const totalCount = filteredAndSortedRules.length;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+  const currentPage = Math.min(page, totalPages);
+
+  const pageItems = React.useMemo(() => {
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    return filteredAndSortedRules.slice(startIdx, startIdx + PAGE_SIZE);
+  }, [filteredAndSortedRules, currentPage]);
+
   function goToPage(newPage: number) {
-    if (newPage < 1 || newPage > totalPages || newPage === page) return;
-    loadPage(newPage);
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setPage(newPage);
   }
 
   const columns: Column<GroupBuy>[] = [
@@ -188,6 +213,126 @@ export function GroupBuysList() {
         </button>
       </div>
 
+      {/* Filter & Search Bar */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '16px',
+          flexWrap: 'wrap',
+          marginBottom: '20px',
+          alignItems: 'center',
+        }}
+      >
+        {/* Search Input */}
+        <div style={{ flex: '1', minWidth: '240px', position: 'relative' }}>
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 14px 10px 38px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '8px',
+              fontSize: '14px',
+              outline: 'none',
+              transition: 'border-color 0.2s',
+              color: '#374151',
+            }}
+            onFocus={e => (e.target.style.borderColor = '#059669')}
+            onBlur={e => (e.target.style.borderColor = '#D1D5DB')}
+          />
+          <svg
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '18px',
+              height: '18px',
+              color: '#9CA3AF',
+              pointerEvents: 'none',
+            }}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        {/* Status Filter */}
+        <div style={{ minWidth: '160px' }}>
+          <select
+            value={statusFilter}
+            onChange={e => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '8px',
+              fontSize: '14px',
+              outline: 'none',
+              background: '#fff',
+              color: '#374151',
+              cursor: 'pointer',
+              transition: 'border-color 0.2s',
+            }}
+            onFocus={e => (e.target.style.borderColor = '#059669')}
+            onBlur={e => (e.target.style.borderColor = '#D1D5DB')}
+          >
+            <option value="all">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+            <option value="in_production">In Production</option>
+            <option value="quality_check">Quality Check</option>
+            <option value="shipping">Shipping</option>
+            <option value="fulfilled">Fulfilled</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        {/* Date Sorting */}
+        <div style={{ minWidth: '180px' }}>
+          <select
+            value={dateSortOrder}
+            onChange={e => {
+              setDateSortOrder(e.target.value as 'desc' | 'asc');
+              setPage(1);
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '8px',
+              fontSize: '14px',
+              outline: 'none',
+              background: '#fff',
+              color: '#374151',
+              cursor: 'pointer',
+              transition: 'border-color 0.2s',
+            }}
+            onFocus={e => (e.target.style.borderColor = '#059669')}
+            onBlur={e => (e.target.style.borderColor = '#D1D5DB')}
+          >
+            <option value="desc">Date: Latest to Oldest</option>
+            <option value="asc">Date: Oldest to Latest</option>
+          </select>
+        </div>
+      </div>
+
       {error && (
         <div
           style={{
@@ -232,22 +377,22 @@ export function GroupBuysList() {
           }}
         >
           <span style={{ fontSize: '13px', color: '#6B7280' }}>
-            Page {page} of {totalPages} · {totalCount} total
+            Page {currentPage} of {totalPages} · {totalCount} total
           </span>
 
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             <button
-              onClick={() => goToPage(page - 1)}
-              disabled={page === 1}
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
               style={{
                 padding: '6px 12px',
                 borderRadius: '6px',
                 border: '1px solid #D1D5DB',
                 background: '#fff',
-                color: page === 1 ? '#D1D5DB' : '#374151',
+                color: currentPage === 1 ? '#D1D5DB' : '#374151',
                 fontSize: '13px',
                 fontWeight: '500',
-                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
               }}
             >
               ← Prev
@@ -256,7 +401,7 @@ export function GroupBuysList() {
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(p => {
                 // Show first, last, current, and neighbors of current; ellipsis elsewhere
-                return p === 1 || p === totalPages || Math.abs(p - page) <= 1;
+                return p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1;
               })
               .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
                 if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
@@ -276,9 +421,9 @@ export function GroupBuysList() {
                       width: '32px',
                       height: '32px',
                       borderRadius: '6px',
-                      border: p === page ? '1px solid #059669' : '1px solid #D1D5DB',
-                      background: p === page ? '#059669' : '#fff',
-                      color: p === page ? '#fff' : '#374151',
+                      border: p === currentPage ? '1px solid #059669' : '1px solid #D1D5DB',
+                      background: p === currentPage ? '#059669' : '#fff',
+                      color: p === currentPage ? '#fff' : '#374151',
                       fontSize: '13px',
                       fontWeight: '600',
                       cursor: 'pointer',
@@ -290,17 +435,17 @@ export function GroupBuysList() {
               )}
 
             <button
-              onClick={() => goToPage(page + 1)}
-              disabled={page === totalPages}
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
               style={{
                 padding: '6px 12px',
                 borderRadius: '6px',
                 border: '1px solid #D1D5DB',
                 background: '#fff',
-                color: page === totalPages ? '#D1D5DB' : '#374151',
+                color: currentPage === totalPages ? '#D1D5DB' : '#374151',
                 fontSize: '13px',
                 fontWeight: '500',
-                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
               }}
             >
               Next →

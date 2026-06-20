@@ -1,15 +1,15 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "060c7b02-ea08-4825-bbfb-540795525286",
+  "id": "bce15dcb-acbd-422d-aee5-898944b8c7eb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "shops": {
       "name": "shops",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(36)",
+        "public_id": {
+          "name": "public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -25,14 +25,14 @@
           "name": "access_token",
           "type": "varchar(512)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "scope": {
           "name": "scope",
           "type": "varchar(500)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "email": {
@@ -92,10 +92,10 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "shops_id": {
-          "name": "shops_id",
+        "shops_public_id": {
+          "name": "shops_public_id",
           "columns": [
-            "id"
+            "public_id"
           ]
         }
       },
@@ -105,16 +105,16 @@
     "sessions": {
       "name": "sessions",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(36)",
+        "public_id": {
+          "name": "public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "varchar(36)",
+        "shop_public_id": {
+          "name": "shop_public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -158,10 +158,10 @@
         }
       },
       "indexes": {
-        "idx_sessions_shop_id": {
-          "name": "idx_sessions_shop_id",
+        "idx_sessions_shop_public_id": {
+          "name": "idx_sessions_shop_public_id",
           "columns": [
-            "shop_id"
+            "shop_public_id"
           ],
           "isUnique": true
         },
@@ -174,25 +174,25 @@
         }
       },
       "foreignKeys": {
-        "sessions_shop_id_shops_id_fk": {
-          "name": "sessions_shop_id_shops_id_fk",
+        "sessions_shop_public_id_shops_public_id_fk": {
+          "name": "sessions_shop_public_id_shops_public_id_fk",
           "tableFrom": "sessions",
           "tableTo": "shops",
           "columnsFrom": [
-            "shop_id"
+            "shop_public_id"
           ],
           "columnsTo": [
-            "id"
+            "public_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "sessions_id": {
-          "name": "sessions_id",
+        "sessions_public_id": {
+          "name": "sessions_public_id",
           "columns": [
-            "id"
+            "public_id"
           ]
         }
       },
@@ -202,16 +202,16 @@
     "rules": {
       "name": "rules",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(36)",
+        "public_id": {
+          "name": "public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "varchar(36)",
+        "shop_public_id": {
+          "name": "shop_public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -317,17 +317,17 @@
         }
       },
       "indexes": {
-        "idx_rules_shop_id": {
-          "name": "idx_rules_shop_id",
+        "idx_rules_shop_public_id": {
+          "name": "idx_rules_shop_public_id",
           "columns": [
-            "shop_id"
+            "shop_public_id"
           ],
           "isUnique": false
         },
-        "idx_rules_shop_product": {
-          "name": "idx_rules_shop_product",
+        "ux_rules_shop_product": {
+          "name": "ux_rules_shop_product",
           "columns": [
-            "shop_id",
+            "shop_public_id",
             "shopify_product_id"
           ],
           "isUnique": true
@@ -342,32 +342,32 @@
         "idx_rules_shop_urgency": {
           "name": "idx_rules_shop_urgency",
           "columns": [
-            "shop_id",
+            "shop_public_id",
             "urgency_score"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "rules_shop_id_shops_id_fk": {
-          "name": "rules_shop_id_shops_id_fk",
+        "rules_shop_public_id_shops_public_id_fk": {
+          "name": "rules_shop_public_id_shops_public_id_fk",
           "tableFrom": "rules",
           "tableTo": "shops",
           "columnsFrom": [
-            "shop_id"
+            "shop_public_id"
           ],
           "columnsTo": [
-            "id"
+            "public_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "rules_id": {
-          "name": "rules_id",
+        "rules_public_id": {
+          "name": "rules_public_id",
           "columns": [
-            "id"
+            "public_id"
           ]
         }
       },
@@ -377,16 +377,16 @@
     "products": {
       "name": "products",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(36)",
+        "public_id": {
+          "name": "public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "rule_id": {
-          "name": "rule_id",
-          "type": "varchar(36)",
+        "rule_public_id": {
+          "name": "rule_public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -445,17 +445,17 @@
         }
       },
       "indexes": {
-        "idx_products_rule_id": {
-          "name": "idx_products_rule_id",
+        "idx_products_rule_public_id": {
+          "name": "idx_products_rule_public_id",
           "columns": [
-            "rule_id"
+            "rule_public_id"
           ],
           "isUnique": false
         },
-        "idx_products_rule_order": {
-          "name": "idx_products_rule_order",
+        "ux_products_rule_order": {
+          "name": "ux_products_rule_order",
           "columns": [
-            "rule_id",
+            "rule_public_id",
             "order_index"
           ],
           "isUnique": true
@@ -469,25 +469,25 @@
         }
       },
       "foreignKeys": {
-        "products_rule_id_rules_id_fk": {
-          "name": "products_rule_id_rules_id_fk",
+        "products_rule_public_id_rules_public_id_fk": {
+          "name": "products_rule_public_id_rules_public_id_fk",
           "tableFrom": "products",
           "tableTo": "rules",
           "columnsFrom": [
-            "rule_id"
+            "rule_public_id"
           ],
           "columnsTo": [
-            "id"
+            "public_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "products_id": {
-          "name": "products_id",
+        "products_public_id": {
+          "name": "products_public_id",
           "columns": [
-            "id"
+            "public_id"
           ]
         }
       },
@@ -497,16 +497,16 @@
     "scores": {
       "name": "scores",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(36)",
+        "public_id": {
+          "name": "public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "rule_id": {
-          "name": "rule_id",
-          "type": "varchar(36)",
+        "rule_public_id": {
+          "name": "rule_public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -568,50 +568,50 @@
         }
       },
       "indexes": {
-        "idx_scores_rule_id": {
-          "name": "idx_scores_rule_id",
+        "idx_scores_rule_public_id": {
+          "name": "idx_scores_rule_public_id",
           "columns": [
-            "rule_id"
+            "rule_public_id"
           ],
           "isUnique": false
         },
         "idx_scores_rule_reported_at": {
           "name": "idx_scores_rule_reported_at",
           "columns": [
-            "rule_id",
+            "rule_public_id",
             "reported_at"
           ],
           "isUnique": false
         },
-        "idx_scores_rule_reported_unique": {
-          "name": "idx_scores_rule_reported_unique",
+        "ux_scores_rule_reported": {
+          "name": "ux_scores_rule_reported",
           "columns": [
-            "rule_id",
+            "rule_public_id",
             "reported_at"
           ],
           "isUnique": true
         }
       },
       "foreignKeys": {
-        "scores_rule_id_rules_id_fk": {
-          "name": "scores_rule_id_rules_id_fk",
+        "scores_rule_public_id_rules_public_id_fk": {
+          "name": "scores_rule_public_id_rules_public_id_fk",
           "tableFrom": "scores",
           "tableTo": "rules",
           "columnsFrom": [
-            "rule_id"
+            "rule_public_id"
           ],
           "columnsTo": [
-            "id"
+            "public_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "scores_id": {
-          "name": "scores_id",
+        "scores_public_id": {
+          "name": "scores_public_id",
           "columns": [
-            "id"
+            "public_id"
           ]
         }
       },
@@ -621,23 +621,23 @@
     "activity_logs": {
       "name": "activity_logs",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(36)",
+        "public_id": {
+          "name": "public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "shop_id": {
-          "name": "shop_id",
-          "type": "varchar(36)",
+        "shop_public_id": {
+          "name": "shop_public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "group_buy_id": {
-          "name": "group_buy_id",
-          "type": "varchar(36)",
+        "group_buy_public_id": {
+          "name": "group_buy_public_id",
+          "type": "binary(16)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -673,17 +673,17 @@
         }
       },
       "indexes": {
-        "idx_activity_logs_shop_id": {
-          "name": "idx_activity_logs_shop_id",
+        "idx_activity_logs_shop_public_id": {
+          "name": "idx_activity_logs_shop_public_id",
           "columns": [
-            "shop_id"
+            "shop_public_id"
           ],
           "isUnique": false
         },
-        "idx_activity_logs_group_buy_id": {
-          "name": "idx_activity_logs_group_buy_id",
+        "idx_activity_logs_group_buy_public_id": {
+          "name": "idx_activity_logs_group_buy_public_id",
           "columns": [
-            "group_buy_id"
+            "group_buy_public_id"
           ],
           "isUnique": false
         },
@@ -697,32 +697,147 @@
         "idx_activity_logs_shop_created_at": {
           "name": "idx_activity_logs_shop_created_at",
           "columns": [
-            "shop_id",
+            "shop_public_id",
             "created_at"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "activity_logs_shop_id_shops_id_fk": {
-          "name": "activity_logs_shop_id_shops_id_fk",
+        "activity_logs_shop_public_id_shops_public_id_fk": {
+          "name": "activity_logs_shop_public_id_shops_public_id_fk",
           "tableFrom": "activity_logs",
           "tableTo": "shops",
           "columnsFrom": [
-            "shop_id"
+            "shop_public_id"
           ],
           "columnsTo": [
-            "id"
+            "public_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "activity_logs_group_buy_public_id_rules_public_id_fk": {
+          "name": "activity_logs_group_buy_public_id_rules_public_id_fk",
+          "tableFrom": "activity_logs",
+          "tableTo": "rules",
+          "columnsFrom": [
+            "group_buy_public_id"
+          ],
+          "columnsTo": [
+            "public_id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "activity_logs_public_id": {
+          "name": "activity_logs_public_id",
+          "columns": [
+            "public_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "orders": {
+      "name": "orders",
+      "columns": {
+        "public_id": {
+          "name": "public_id",
+          "type": "binary(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "shop_public_id": {
+          "name": "shop_public_id",
+          "type": "binary(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rule_public_id": {
+          "name": "rule_public_id",
+          "type": "binary(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "order_reference": {
+          "name": "order_reference",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "idx_orders_rule_public_id": {
+          "name": "idx_orders_rule_public_id",
+          "columns": [
+            "rule_public_id"
+          ],
+          "isUnique": false
+        },
+        "idx_orders_shop_public_id": {
+          "name": "idx_orders_shop_public_id",
+          "columns": [
+            "shop_public_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "orders_shop_public_id_shops_public_id_fk": {
+          "name": "orders_shop_public_id_shops_public_id_fk",
+          "tableFrom": "orders",
+          "tableTo": "shops",
+          "columnsFrom": [
+            "shop_public_id"
+          ],
+          "columnsTo": [
+            "public_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "orders_rule_public_id_rules_public_id_fk": {
+          "name": "orders_rule_public_id_rules_public_id_fk",
+          "tableFrom": "orders",
+          "tableTo": "rules",
+          "columnsFrom": [
+            "rule_public_id"
+          ],
+          "columnsTo": [
+            "public_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "activity_logs_id": {
-          "name": "activity_logs_id",
+        "orders_public_id": {
+          "name": "orders_public_id",
           "columns": [
-            "id"
+            "public_id"
           ]
         }
       },

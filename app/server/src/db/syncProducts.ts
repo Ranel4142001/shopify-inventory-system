@@ -3,6 +3,7 @@ import { shops, rules } from "./schema";
 import { eq } from "drizzle-orm";
 import { decrypt } from "../shared/utils/crypto";
 import { shopifyRestRequest } from "../shared/utils/shopifyClient";
+import { mapDbShopToShop } from "./schema/mappers";
 
 interface ShopifyProduct {
   id: number;
@@ -206,7 +207,11 @@ async function syncProducts() {
     process.exit(1);
   }
 
-  const shop = shopList[0];
+  const shop = mapDbShopToShop(shopList[0]);
+  if (!shop.accessToken) {
+    console.error("❌ Shop has no access token.");
+    process.exit(1);
+  }
   const accessToken = decrypt(shop.accessToken);
   console.log(`✅ Found shop: ${shop.domain}`);
 
@@ -258,6 +263,48 @@ async function syncProducts() {
     }
   } else {
     console.log("✨ No snowboard/skateboard default products to delete.");
+  }
+
+  // 2.5. Create "Group Buys" collection if it doesn't exist
+  console.log("📂 Checking for 'Group Buys' collection...");
+  try {
+    const collectionsRes = await shopifyRestRequest<{
+      smart_collections: Array<{ id: number; handle: string; title: string }>;
+    }>(shop.domain, accessToken, "smart_collections.json");
+
+    const groupBuyCollection = collectionsRes.smart_collections?.find(
+      (c) => c.handle === "group-buys" || c.title.toLowerCase() === "group buys"
+    );
+
+    if (groupBuyCollection) {
+      console.log(`   ✅ 'Group Buys' collection already exists (ID: ${groupBuyCollection.id}).`);
+    } else {
+      console.log("   🆕 Creating 'Group Buys' smart collection...");
+      const createCollRes = await shopifyRestRequest<any>(
+        shop.domain,
+        accessToken,
+        "smart_collections.json",
+        "POST",
+        {
+          smart_collection: {
+            title: "Group Buys",
+            handle: "group-buys",
+            rules: [
+              {
+                column: "tag",
+                relation: "equals",
+                condition: "group-buy",
+              },
+            ],
+          },
+        }
+      );
+      console.log(
+        `   🎉 Created 'Group Buys' collection (ID: ${createCollRes.smart_collection.id}).`
+      );
+    }
+  } catch (error: any) {
+    console.error("   ❌ Failed to sync 'Group Buys' collection:", error.message);
   }
 
   // 3. Create Keyboard products and link them to rules

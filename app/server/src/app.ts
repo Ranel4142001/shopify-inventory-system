@@ -12,7 +12,7 @@ import router from './router';
 
 const app = express();
 
-// ── Security middleware ───────────────────────────────────────────────────────
+// Security middleware
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -22,7 +22,7 @@ app.use(
   })
 )
 
-// ── Shopify frame-ancestors (REQUIRED for embedded apps) ──────
+// Shopify frame-ancestors (REQUIRED for embedded apps) 
 // This allows Shopify Admin to embed our app in an iframe
 app.use((_req, res, next) => {
   res.setHeader(
@@ -32,7 +32,7 @@ app.use((_req, res, next) => {
   next();
 });
 
-// ── CORS ──────────────────────────────────────────────────────────────────────
+// CORS
 app.use(
   cors({
     origin: [
@@ -47,23 +47,23 @@ app.use(
   })
 );
 
-// ── Body parsing ──────────────────────────────────────────────────────────────
+// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ── Cookie parsing ────────────────────────────────────────────────────────────
+// Cookie parsing
 app.use(cookieParser(env.COOKIE_SECRET));
 
-// ── Request logging ───────────────────────────────────────────────────────────
+// Request logging 
 app.use(requestLogger);
 
-// ── Global rate limiting ──────────────────────────────────────────────────────
+// Global rate limiting
 app.use(globalRateLimiter);
 
-// ── API routes ────────────────────────────────────────────────────────────────
+// API routes
 app.use('/api', router);
 
-// ── Serve frontend build (production) ────────────────────────
+// Serve frontend build (production)
 const frontendDist = path.resolve(__dirname, '../../client/dist');
 if (fs.existsSync(frontendDist)) {
   // Serve static files from built frontend
@@ -86,7 +86,7 @@ if (fs.existsSync(frontendDist)) {
   });
 }
 
-// ── 404 handler ───────────────────────────────────────────────────────────────
+// 404 handler
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
     res.status(404).json({
@@ -101,7 +101,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ── Global error handler (must be last) ──────────────────────────────────────
+// Global error handler (must be last)
 app.use(errorHandler);
 
 export default app;

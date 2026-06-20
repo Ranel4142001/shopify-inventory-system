@@ -1,0 +1,4 @@
+[environments.default]
+store = "tactile-lab.myshopify.com"
+path = "theme"
+

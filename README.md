@@ -42,12 +42,12 @@ npm install -g @shopify/cli @shopify/theme
 ### Push theme to dev store
 ```bash
 cd shopify-store-tactile-lab
-shopify theme push --store=YOUR-STORE.myshopify.com --path=theme
+shopify theme push --store=tactile-lab.myshopify.com --path=theme
 ```
 
 ### Preview theme locally
 ```bash
-shopify theme dev --store=YOUR-STORE.myshopify.com --path=theme
+shopify theme dev --store=tactile-lab.myshopify.com --path=theme
 ```
 
 ### Add sample products
@@ -176,7 +176,7 @@ Copy the HTTPS URL (e.g. `https://xxxx.trycloudflare.com`) and:
 
 ### 6. Install App on Dev Store
 
-Visit in your browser: https://xxxx.trycloudflare.com/api/auth/install?shop=YOUR-STORE.myshopify.com
+Visit in your browser: https://xxxx.trycloudflare.com/api/auth/install?shop=tactile-lab.myshopify.com
 
 This triggers the OAuth flow. After approval you'll be redirected to the app.
 

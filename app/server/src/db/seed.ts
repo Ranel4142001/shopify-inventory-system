@@ -13,6 +13,15 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../shared/utils/crypto";
+import {
+  mapDbShopToShop,
+  mapShopToDbNewShop,
+  mapSessionToDbNewSession,
+  mapRuleToDbNewRule,
+  mapProductToDbNewProduct,
+  mapScoreToDbNewScore,
+  mapActivityLogToDbNewActivityLog
+} from "./schema/mappers";
 
 async function seed() {
   console.log(" Seeding database...");
@@ -21,19 +30,21 @@ async function seed() {
   const shopId = uuidv4();
   const shopDomain = "tactile-lab.myshopify.com";
 
+  const dbShopInsert = mapShopToDbNewShop({
+    id: shopId,
+    domain: shopDomain,
+    accessToken: encrypt("shpat_dummy_access_token_for_seeding"),
+    scope: "read_products,write_products,read_orders,read_customers",
+    email: "admin@tactilelab.com",
+    shopName: "Tactile Lab",
+    isActive: true, // ✅ was: 'true' (string) — now correct boolean
+    installedAt: new Date(),
+    updatedAt: new Date(),
+  });
+
   await db
     .insert(shops)
-    .values({
-      id: shopId,
-      domain: shopDomain,
-      accessToken: encrypt("shpat_dummy_access_token_for_seeding"),
-      scope: "read_products,write_products,read_orders,read_customers",
-      email: "admin@tactilelab.com",
-      shopName: "Tactile Lab",
-      isActive: true, // ✅ was: 'true' (string) — now correct boolean
-      installedAt: new Date(),
-      updatedAt: new Date(),
-    })
+    .values(dbShopInsert as any)
     .onDuplicateKeyUpdate({
       set: {
         shopName: "Tactile Lab",
@@ -43,7 +54,7 @@ async function seed() {
 
   // Get the actual shop row (may have already existed before the upsert)
   const existingShop = await db.select().from(shops).limit(1);
-  const actualShopId = existingShop[0].id;
+  const actualShopId = mapDbShopToShop(existingShop[0]).id;
 
   console.log("✅ Shop created");
 
@@ -62,17 +73,19 @@ async function seed() {
     sessionId,
   });
 
+  const dbSessionInsert = mapSessionToDbNewSession({
+    id: sessionId,
+    shopId: actualShopId,
+    accessToken: encrypt(accessToken),
+    refreshToken: encrypt(refreshToken),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
   await db
     .insert(sessions)
-    .values({
-      id: sessionId,
-      shopId: actualShopId,
-      accessToken: encrypt(accessToken),
-      refreshToken: encrypt(refreshToken),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
+    .values(dbSessionInsert as any)
     .onDuplicateKeyUpdate({
       set: { updatedAt: new Date() },
     });
@@ -200,7 +213,7 @@ async function seed() {
     ruleIds.push(ruleId);
 
     // ── 3a. Insert rule ──────────────────────────────────────
-    await db.insert(rules).values({
+    const dbRuleInsert = mapRuleToDbNewRule({
       id: ruleId,
       shopId: actualShopId,
       productTitle: gb.productTitle,
@@ -221,6 +234,7 @@ async function seed() {
       ),
       updatedAt: new Date(),
     });
+    await db.insert(rules).values(dbRuleInsert as any);
 
     // ── 3b. Insert manufacturing stages (products) ───────────
     const currentStageIndex = ALL_STAGES.indexOf(
@@ -254,7 +268,7 @@ async function seed() {
             : "in_progress"
           : "pending";
 
-      await db.insert(products).values({
+      const dbProductInsert = mapProductToDbNewProduct({
         id: uuidv4(),
         ruleId,
         stageName,
@@ -265,6 +279,7 @@ async function seed() {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+      await db.insert(products).values(dbProductInsert as any);
     }
 
     // ── 3c. Insert urgency score snapshot ────────────────────
@@ -277,17 +292,18 @@ async function seed() {
             ? "Monitor closely — check for supplier updates this week"
             : "On track — continue routine monitoring";
 
-    await db.insert(scores).values({
+    const dbScoreInsert = mapScoreToDbNewScore({
       id: uuidv4(),
       ruleId,
       urgencyScore: gb.urgencyScore,
+      reportedAt: new Date(),
       daysUntilShip: gb.daysUntilShip,
       delayDays: gb.delayDays,
       customerCount: gb.customerCount,
       message: scoreMessage,
-      reportedAt: new Date(),
       createdAt: new Date(),
     });
+    await db.insert(scores).values(dbScoreInsert as any);
   }
 
   console.log("✅ Group buys, stages, and scores created");
@@ -368,7 +384,7 @@ async function seed() {
   ];
 
   for (const activity of activities) {
-    await db.insert(activityLogs).values({
+    const dbLogInsert = mapActivityLogToDbNewActivityLog({
       id: uuidv4(),
       shopId: actualShopId,
       // groupBuyId is null for shop-wide events (groupBuyIndex === -1)
@@ -383,6 +399,7 @@ async function seed() {
       },
       createdAt: new Date(Date.now() - activity.minutesAgo * 60 * 1000),
     });
+    await db.insert(activityLogs).values(dbLogInsert as any);
   }
 
   console.log("✅ Activity logs created");

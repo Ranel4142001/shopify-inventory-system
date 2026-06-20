@@ -2,100 +2,137 @@ import {
   mysqlTable,
   varchar,
   timestamp,
-  text,
   int,
-  mediumint,
-  smallint,
-  tinyint,
-  mysqlEnum,
+  text,
   date,
+  tinyint,
+  mediumint,
+  mysqlEnum,
   index,
   uniqueIndex,
-} from 'drizzle-orm/mysql-core';
-import { sql } from 'drizzle-orm';
-import { shops } from './shops.schema';
+} from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
+import { shops } from "./shops.schema";
+import { binary16 } from "./customTypes";
 
-// ─── Enum values extracted as a const for reuse in app code ──────────────────
+/**
+ * RULE_STATUSES
+ * - Reusable enum for rule lifecycle
+ */
 export const RULE_STATUSES = [
-  'open',
-  'closed',
-  'in_production',
-  'quality_check',
-  'shipping',
-  'fulfilled',
-  'cancelled',
+  "open",
+  "closed",
+  "in_production",
+  "quality_check",
+  "shipping",
+  "fulfilled",
+  "cancelled",
 ] as const;
 
 export type RuleStatus = (typeof RULE_STATUSES)[number];
 
-// ─── Table definition ─────────────────────────────────────────────────────────
+/**
+ * rules (group buys)
+ * - Primary id: packed 16-byte UUID (publicId)
+ * - FK: shopPublicId -> shops.public_id
+ */
 export const rules = mysqlTable(
-  'rules',
+  "rules",
   {
-    id: varchar('id', { length: 36 }).primaryKey(),
+    // Packed UUID primary id
+    publicId: binary16("public_id").primaryKey(),
 
-    shopId: varchar('shop_id', { length: 36 })
+    // FK to shops.public_id; deleting a shop removes its rules
+    shopPublicId: binary16("shop_public_id")
       .notNull()
-      .references(() => shops.id, { onDelete: 'cascade' }),
+      .references(() => shops.publicId, { onDelete: "cascade" }),
 
-    productTitle: varchar('product_title', { length: 255 }).notNull(),
+    // Product title and storefront handle
+    productTitle: varchar("product_title", { length: 255 }).notNull(),
+    productHandle: varchar("product_handle", { length: 255 }),
 
-    // Shopify handles are lowercase-kebab, 255 is the Shopify-enforced max
-    productHandle: varchar('product_handle', { length: 255 }),
+    // Shopify product id (string)
+    shopifyProductId: varchar("shopify_product_id", { length: 64 }),
 
-    // Shopify GIDs are numeric strings — 64 chars is plenty
-    shopifyProductId: varchar('shopify_product_id', { length: 64 }),
+    // Rule status (enum)
+    status: mysqlEnum("status", RULE_STATUSES).notNull().default("open"),
 
-    status: mysqlEnum('status', RULE_STATUSES).notNull().default('open'),
+    // Planned ship date (date only)
+    targetShipDate: date("target_ship_date").notNull(),
 
-    // date-only — ship dates don't need time precision
-    targetShipDate: date('target_ship_date', { mode: 'date' }).notNull(),
-
-    currentStage: varchar('current_stage', { length: 100 })
+    // Current stage name
+    currentStage: varchar("current_stage", { length: 100 })
       .notNull()
-      .default('Funding'),
+      .default("Funding"),
 
-    // mediumint covers 0–16M customers; saves 1 byte vs int
-    customerCount: mediumint('customer_count').notNull().default(0),
+    // Counts and money (compact numeric types)
+    customerCount: mediumint("customer_count").notNull().default(0),
+    fundingGoal: int("funding_goal").notNull().default(0),
+    currentFunding: int("current_funding").notNull().default(0),
 
-    // Funding amounts in minor currency units (cents) — int covers up to ~$21M
-    fundingGoal: int('funding_goal').notNull().default(0),
-    currentFunding: int('current_funding').notNull().default(0),
+    // Bounded urgency score (0–127)
+    urgencyScore: tinyint("urgency_score").notNull().default(0),
 
-    // Urgency is a bounded score (e.g. 0–100) — tinyint (0–127) is sufficient
-    urgencyScore: tinyint('urgency_score').notNull().default(0),
+    // Freeform notes
+    notes: text("notes"),
 
-    notes: text('notes'),
-
-    createdAt: timestamp('created_at', { mode: 'date' })
+    // Timestamps
+    createdAt: timestamp("created_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-
-    updatedAt: timestamp('updated_at', { mode: 'date' })
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull()
       .$onUpdate(() => new Date()),
   },
   (table) => ({
-    // Primary access pattern: all rules for a shop
-    shopIdIdx: index('idx_rules_shop_id').on(table.shopId),
+    // All rules for a shop
+    shopIdIdx: index("idx_rules_shop_public_id").on(table.shopPublicId),
 
-    // Enforce one rule per Shopify product per shop
-    shopProductUniqueIdx: uniqueIndex('idx_rules_shop_product').on(
-      table.shopId,
+    // One rule per Shopify product per shop
+    shopProductUniqueIdx: uniqueIndex("ux_rules_shop_product").on(
+      table.shopPublicId,
       table.shopifyProductId,
     ),
 
-    // Dashboard filters by status (open, in_production, etc.)
-    statusIdx: index('idx_rules_status').on(table.status),
+    // Filter by status
+    statusIdx: index("idx_rules_status").on(table.status),
 
-    // Sorting/alerting by urgency score across a shop's rules
-    urgencyIdx: index('idx_rules_shop_urgency').on(
-      table.shopId,
+    // Sort or alert by urgency within a shop
+    urgencyIdx: index("idx_rules_shop_urgency").on(
+      table.shopPublicId,
       table.urgencyScore,
     ),
   }),
 );
 
-export type Rule = typeof rules.$inferSelect;
-export type NewRule = typeof rules.$inferInsert;
+export type DbRule = typeof rules.$inferSelect;
+export type DbNewRule = typeof rules.$inferInsert;
+
+export type Rule = {
+  id: string;
+  shopId: string;
+  productTitle: string;
+  productHandle: string | null;
+  shopifyProductId: string | null;
+  status: RuleStatus;
+  targetShipDate: Date;
+  currentStage: string;
+  customerCount: number;
+  fundingGoal: number;
+  currentFunding: number;
+  urgencyScore: number;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+export type NewRule = Omit<Rule, "createdAt" | "updatedAt" | "status" | "currentStage" | "customerCount" | "fundingGoal" | "currentFunding" | "urgencyScore"> & {
+  status?: RuleStatus;
+  currentStage?: string;
+  customerCount?: number;
+  fundingGoal?: number;
+  currentFunding?: number;
+  urgencyScore?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+};

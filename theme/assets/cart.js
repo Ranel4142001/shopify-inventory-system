@@ -67,6 +67,83 @@
         subtotal.textContent = formatMoney(cart.total_price);
       }
 
+      // Update items list
+      const itemsContainer = document.getElementById('cart-drawer-items');
+      const footer = document.getElementById('cart-drawer-footer');
+
+      if (itemsContainer) {
+        if (cart.items.length > 0) {
+          itemsContainer.innerHTML = cart.items.map(item => {
+            let propertiesHtml = '';
+            if (item.properties) {
+              for (const [key, value] of Object.entries(item.properties)) {
+                if (value) {
+                  propertiesHtml += `
+                    <p class="cart-item__property">
+                      <span>${key}:</span>
+                      ${value}
+                    </p>
+                  `;
+                }
+              }
+            }
+
+            const variantHtml = item.variant_title && item.variant_title !== 'Default Title'
+              ? `<p class="cart-item__variant">${item.variant_title}</p>`
+              : '';
+
+            const imageHtml = item.image
+              ? `<div class="cart-item__image-wrapper">
+                   <img src="${item.image}" alt="${item.title}" class="cart-item__image" width="120" height="120">
+                 </div>`
+              : '<div class="cart-item__image-wrapper"></div>';
+
+            return `
+              <div class="cart-item" data-key="${item.key}">
+                ${imageHtml}
+                <div class="cart-item__info">
+                  <p class="cart-item__vendor">${item.vendor || ''}</p>
+                  <h4 class="cart-item__title">${item.product_title}</h4>
+                  ${variantHtml}
+                  ${propertiesHtml}
+                  
+                  <div class="cart-item__footer">
+                    <div class="cart-item__quantity">
+                      <button class="cart-item__qty-btn" data-action="decrease" data-key="${item.key}">−</button>
+                      <span class="cart-item__qty-value">${item.quantity}</span>
+                      <button class="cart-item__qty-btn" data-action="increase" data-key="${item.key}">+</button>
+                    </div>
+                    <span class="cart-item__price">${formatMoney(item.final_line_price)}</span>
+                  </div>
+                </div>
+                
+                <button class="cart-item__remove" data-key="${item.key}" aria-label="Remove">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            `;
+          }).join('');
+
+          if (footer) {
+            footer.style.display = 'flex';
+          }
+        } else {
+          itemsContainer.innerHTML = `
+            <div class="cart-drawer__empty">
+              <p>Your cart is empty.</p>
+              <a href="/collections/all" class="btn btn--primary">
+                Continue Shopping
+              </a>
+            </div>
+          `;
+          if (footer) {
+            footer.style.display = 'none';
+          }
+        }
+      }
+
       return cart;
     } catch (err) {
       console.error('Failed to refresh cart:', err);
@@ -75,7 +152,7 @@
 
   // ── Format Money (Shopify cents to dollars) ──────────────────
   function formatMoney(cents) {
-    return '$' + (cents / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return '₱' + (cents / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
 
   // ── Add to Cart ──────────────────────────────────────────────

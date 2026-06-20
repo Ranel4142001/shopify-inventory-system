@@ -1,70 +1,91 @@
 import {
   mysqlTable,
-  varchar,
-  timestamp,
-  text,
+  tinyint,
   smallint,
   mediumint,
-  tinyint,
+  text,
+  timestamp,
   index,
   uniqueIndex,
-} from 'drizzle-orm/mysql-core';
-import { sql } from 'drizzle-orm';
-import { rules } from './rules.schema';
+} from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
+import { rules } from "./rules.schema";
+import { binary16 } from "./customTypes";
 
+/**
+ * scores
+ * - Primary id: packed 16-byte UUID (publicId)
+ * - FK: rulePublicId -> rules.public_id
+ * - Compact numeric types chosen to save space
+ */
 export const scores = mysqlTable(
-  'scores',
+  "scores",
   {
-    id: varchar('id', { length: 36 }).primaryKey(),
+    // Packed UUID primary id
+    publicId: binary16("public_id").primaryKey(),
 
-    ruleId: varchar('rule_id', { length: 36 })
+    // FK to rules.public_id; deleting a rule removes its scores
+    rulePublicId: binary16("rule_public_id")
       .notNull()
-      .references(() => rules.id, { onDelete: 'cascade' }),
+      .references(() => rules.publicId, { onDelete: "cascade" }),
 
-    // Bounded 0–100 score — tinyint (0–127) is the right fit, saves 3 bytes vs int
-    urgencyScore: tinyint('urgency_score').notNull().default(0),
+    // 0–100 urgency score (tinyint saves space)
+    urgencyScore: tinyint("urgency_score").notNull().default(0),
 
-    // Days until ship will rarely exceed ±32k — smallint saves 2 bytes vs int
-    // Negative values are valid (overdue), so signed smallint is correct
-    daysUntilShip: smallint('days_until_ship').notNull().default(0),
+    // Days until ship (signed smallint for negative/positive values)
+    daysUntilShip: smallint("days_until_ship").notNull().default(0),
 
-    // Delay in days — same reasoning as daysUntilShip
-    delayDays: smallint('delay_days').notNull().default(0),
+    // Delay in days (signed smallint)
+    delayDays: smallint("delay_days").notNull().default(0),
 
-    // Customer count mirrors rules.schema — mediumint covers 0–16M
-    customerCount: mediumint('customer_count').notNull().default(0),
+    // Customer count (mediumint to cover up to ~16M)
+    customerCount: mediumint("customer_count").notNull().default(0),
 
-    message: text('message'),
+    // Optional message or explanation
+    message: text("message"),
 
-    // reportedAt and createdAt serve different purposes — keep both
-    // reportedAt: when the score event occurred (business time)
-    // createdAt: when the row was inserted (audit time)
-    reportedAt: timestamp('reported_at', { mode: 'date' })
+    // Business time when the score was reported
+    reportedAt: timestamp("reported_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 
-    createdAt: timestamp('created_at', { mode: 'date' })
+    // Row insertion time (audit)
+    createdAt: timestamp("created_at", { mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => ({
-    // Primary access pattern: all scores for a rule, newest first
-    ruleIdIdx: index('idx_scores_rule_id').on(table.ruleId),
+    // Fast lookup of scores for a rule
+    ruleIdIdx: index("idx_scores_rule_public_id").on(table.rulePublicId),
 
-    // "Latest score per rule" is the most common read — composite covers it efficiently
-    ruleReportedAtIdx: index('idx_scores_rule_reported_at').on(
-      table.ruleId,
+    // Common pattern: latest scores per rule
+    ruleReportedAtIdx: index("idx_scores_rule_reported_at").on(
+      table.rulePublicId,
       table.reportedAt,
     ),
 
-    // Enforce only one score snapshot per rule per timestamp
-    // prevents duplicate score inserts for the same reporting window
-    ruleReportedAtUniqueIdx: uniqueIndex('idx_scores_rule_reported_unique').on(
-      table.ruleId,
+    // Prevent duplicate reports for same rule + timestamp
+    ruleReportedAtUniqueIdx: uniqueIndex("ux_scores_rule_reported").on(
+      table.rulePublicId,
       table.reportedAt,
     ),
   }),
 );
 
-export type Score = typeof scores.$inferSelect;
-export type NewScore = typeof scores.$inferInsert;
+export type DbScore = typeof scores.$inferSelect;
+export type DbNewScore = typeof scores.$inferInsert;
+
+export type Score = {
+  id: string;
+  ruleId: string;
+  urgencyScore: number;
+  daysUntilShip: number;
+  delayDays: number;
+  customerCount: number;
+  message: string | null;
+  reportedAt: Date;
+  createdAt: Date;
+};
+export type NewScore = Omit<Score, 'createdAt'> & {
+  createdAt?: Date;
+};

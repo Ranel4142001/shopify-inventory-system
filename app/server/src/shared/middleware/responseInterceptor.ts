@@ -11,8 +11,7 @@ export interface ApiResponse<T = any> {
   };
 }
 
-/**
- * Global interceptor that overrides res.json to guarantee 
+/**Global interceptor that overrides res.json to guarantee 
  * a consistent API response envelope across the application.
  */
 export function responseInterceptor(

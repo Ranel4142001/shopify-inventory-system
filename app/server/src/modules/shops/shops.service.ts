@@ -18,6 +18,9 @@ export class ShopsService {
 
   async getDecryptedAccessToken(shopId: string): Promise<string> {
     const shop = await this.getShopById(shopId);
+    if (!shop.accessToken) {
+      throw new Error(`Shop access token not found for shop: ${shopId}`);
+    }
     return decrypt(shop.accessToken);
   }
 

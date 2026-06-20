@@ -26,7 +26,7 @@
               href="{{ link.url }}"
               class="header__nav-link {% if link.active %}is-active{% endif %}"
             >
-              {{ link.title }}
+              {% if link.title == 'Catalog' %}Products{% else %}{{ link.title }}{% endif %}
             </a>
           </li>
         {% endfor %}
@@ -85,7 +85,7 @@
             href="{{ link.url }}"
             class="header__mobile-nav-link {% if link.active %}is-active{% endif %}"
           >
-            {{ link.title }}
+            {% if link.title == 'Catalog' %}Products{% else %}{{ link.title }}{% endif %}
           </a>
         </li>
       {% endfor %}
