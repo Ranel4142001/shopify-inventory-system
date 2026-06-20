@@ -1,4 +1,3 @@
-// app/server/src/shared/utils/crypto.ts
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { env } from '../../config/env';

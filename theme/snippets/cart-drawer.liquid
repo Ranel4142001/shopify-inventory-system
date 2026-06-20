@@ -105,20 +105,18 @@
     </div>
 
     <!-- Footer -->
-    {% if cart.item_count > 0 %}
-      <div class="cart-drawer__footer">
-        <div class="cart-drawer__subtotal">
-          <span>{{ 'cart.subtotal' | t }}</span>
-          <span id="cart-subtotal">{{ cart.total_price | money }}</span>
-        </div>
-        <a href="/checkout" class="btn btn--primary btn--full">
-          {{ 'cart.checkout' | t }}
-        </a>
-        <a href="/collections/all" class="cart-drawer__continue">
-          {{ 'cart.continue_shopping' | t }}
-        </a>
+    <div class="cart-drawer__footer" id="cart-drawer-footer" {% if cart.item_count == 0 %}style="display: none;"{% endif %}>
+      <div class="cart-drawer__subtotal">
+        <span>{{ 'cart.subtotal' | t }}</span>
+        <span id="cart-subtotal">{{ cart.total_price | money }}</span>
       </div>
-    {% endif %}
+      <a href="/checkout" class="btn btn--primary btn--full">
+        {{ 'cart.checkout' | t }}
+      </a>
+      <a href="/collections/all" class="cart-drawer__continue">
+        {{ 'cart.continue_shopping' | t }}
+      </a>
+    </div>
 
   </div>
 </div>

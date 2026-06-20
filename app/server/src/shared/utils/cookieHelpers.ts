@@ -1,4 +1,3 @@
-// app/server/src/shared/utils/cookieHelpers.ts
 import { Request, Response } from 'express';
 import { COOKIE_NAMES, TOKEN_EXPIRY } from '../../config/constants';
 

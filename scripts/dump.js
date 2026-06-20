@@ -9,7 +9,7 @@ mysqldump({
     host: 'localhost',
     port: 3400,
     user: 'root',
-    password: '', // empty string because your DB_PASSWORD is empty
+    password: '', // empty string because DB_PASSWORD is empty
     database: 'tactile_lab',
   },
   dumpToFile: outFile,

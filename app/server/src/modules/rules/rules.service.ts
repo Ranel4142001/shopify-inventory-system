@@ -7,6 +7,7 @@ import {
 } from "../../shared/utils/pagination";
 import type { CreateRuleInput, UpdateRuleInput } from "./rules.validation";
 import type { Rule } from "../../db/schema";
+import { logActivity } from "../activity/activity.service";
 
 export class RulesService {
   async getAllRules(shopId: string, pagination: PaginationParams) {
@@ -33,7 +34,7 @@ export class RulesService {
 
   async createRule(shopId: string, input: CreateRuleInput): Promise<Rule> {
     const id = uuidv4();
-    return rulesRepository.create({
+    const rule = await rulesRepository.create({
       id,
       shopId,
       productTitle: input.productTitle,
@@ -49,6 +50,15 @@ export class RulesService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    await logActivity(
+      shopId,
+      'group_buy_created',
+      `Group buy created: "${rule.productTitle}"`,
+      rule.id
+    );
+
+    return rule;
   }
 
   async updateRule(
@@ -57,7 +67,7 @@ export class RulesService {
     input: UpdateRuleInput,
   ): Promise<Rule> {
     // Verify ownership
-    await this.getRuleById(shopId, ruleId);
+    const oldRule = await this.getRuleById(shopId, ruleId);
 
     const updated = await rulesRepository.update(ruleId, {
       ...input,
@@ -67,7 +77,32 @@ export class RulesService {
       updatedAt: new Date(),
     });
 
-    return updated!;
+    const rule = updated!;
+
+    // Determine action type and description based on changes
+    let actionType: 'group_buy_updated' | 'group_buy_cancelled' | 'stage_updated' = 'group_buy_updated';
+    let description = `Group buy "${rule.productTitle}" was updated`;
+
+    if (input.status && input.status !== oldRule.status) {
+      if (input.status === 'cancelled') {
+        actionType = 'group_buy_cancelled';
+        description = `Group buy "${rule.productTitle}" was cancelled`;
+      } else {
+        description = `Group buy "${rule.productTitle}" status updated to "${input.status}"`;
+      }
+    } else if (input.currentStage && input.currentStage !== oldRule.currentStage) {
+      actionType = 'stage_updated';
+      description = `Group buy "${rule.productTitle}" stage updated to "${input.currentStage}"`;
+    }
+
+    await logActivity(
+      shopId,
+      actionType,
+      description,
+      ruleId
+    );
+
+    return rule;
   }
 
   async deleteRule(shopId: string, ruleId: string): Promise<void> {

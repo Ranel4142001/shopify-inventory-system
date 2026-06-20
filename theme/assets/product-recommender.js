@@ -13,7 +13,7 @@
   const Utils = {
     // Standardizes currency formatting across all components
     formatMoney(cents) {
-      return '$' + (cents / 100).toFixed(2);
+      return '₱' + (cents / 100).toFixed(2);
     },
 
     // Abstracts the repetitive "remove active from siblings, add to self" pattern
@@ -304,7 +304,7 @@
             <p class="product-card__vendor">Tactile Lab</p>
             <h3 class="product-card__title">${product.title}</h3>
             <div class="price-wrapper">
-              <span class="price">${product.price}</span>
+              <span class="price">${product.price.replace('$', '₱')}</span>
             </div>
             <span class="product-tag">${product.tag}</span>
           </div>

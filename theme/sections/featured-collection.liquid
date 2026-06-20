@@ -50,31 +50,35 @@
             {% when 1 %}
               {% assign p_title = 'TL-Carbon TKL' %}
               {% assign p_image = 'keyboard_carbon_tkl.png' %}
-              {% assign p_price = '$169.00' %}
+              {% assign p_price = '₱169.00' %}
+              {% assign p_tags = 'group-buy' %}
             {% when 2 %}
               {% assign p_title = 'TL-Cosmos 75% Aluminum' %}
               {% assign p_image = 'keyboard_cosmos_75.png' %}
-              {% assign p_price = '$189.00' %}
+              {% assign p_price = '₱189.00' %}
+              {% assign p_tags = 'group-buy,new' %}
             {% when 3 %}
               {% assign p_title = 'TL-Eclipse Pro 65%' %}
               {% assign p_image = 'keyboard_eclipse_65.png' %}
-              {% assign p_price = '$199.00' %}
+              {% assign p_price = '₱199.00' %}
+              {% assign p_tags = 'group-buy' %}
             {% when 4 %}
               {% assign p_title = 'TL-Ember Switch Set (Linear)' %}
               {% assign p_image = 'keyboard_ember_switch.png' %}
-              {% assign p_price = '$29.00' %}
+              {% assign p_price = '₱29.00' %}
+              {% assign p_tags = 'in-stock' %}
           {% endcase %}
-          <div class="featured-collection__item">
+          <div class="featured-collection__item" data-tags="{{ p_tags }}">
             <div class="product-card product-card--placeholder">
               <div class="product-card__image-wrapper">
                 <img
-                  src="{{ p_image | asset_url }}"
-                  alt="{{ p_title }}"
-                  class="product-card__image"
-                  loading="lazy"
-                  width="360"
-                  height="360"
-                  style="object-fit: cover;"
+                   src="{{ p_image | asset_url }}"
+                   alt="{{ p_title }}"
+                   class="product-card__image"
+                   loading="lazy"
+                   width="360"
+                   height="360"
+                   style="object-fit: cover;"
                 >
               </div>
               <div class="product-card__info">
@@ -106,7 +110,13 @@
           item.style.display = 'block';
         } else {
           const tags = item.dataset.tags || '';
-          item.style.display = tags.includes(filter) ? 'block' : 'none';
+          if (filter === 'in-stock') {
+            // In stock means it either explicitly has 'in-stock' tag, or is NOT a group-buy
+            const isInStock = tags.includes('in-stock') || (!tags.includes('group-buy') && tags !== '');
+            item.style.display = isInStock ? 'block' : 'none';
+          } else {
+            item.style.display = tags.includes(filter) ? 'block' : 'none';
+          }
         }
       });
     });
